@@ -37,7 +37,9 @@ Point = (function() {
 sendPosition = function(lastPosition) {
   var position;
   position = currentPosition.copy();
-  if (!position.equals(lastPosition)) socket.emit('playerPosition', position);
+  if (!position.equals(lastPosition)) {
+    socket.emit('playerPosition', position.values());
+  }
   return window.setTimeout(function() {
     return sendPosition(position);
   }, timeout);

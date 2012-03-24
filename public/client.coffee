@@ -23,7 +23,7 @@ class Point
 sendPosition = (lastPosition) ->
   position = currentPosition.copy()
   if !position.equals(lastPosition)
-    socket.emit('playerPosition', position)
+    socket.emit('playerPosition', position.values())
   window.setTimeout(() -> 
     sendPosition(position)
   , timeout)
