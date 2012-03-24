@@ -28,7 +28,6 @@ sendPosition = (lastPosition) ->
     sendPosition(position)
   , timeout)
 
-
 currentPosition = new Point()
 
 $ ->
@@ -38,9 +37,15 @@ $ ->
 
 socket = io.connect '/'
 
-socket.on('ready', (playerId) ->
-  console.log "Welcome, player #{playerId}"
+socket.on('ready', (data) ->
+  console.log "Welcome, player #{data.playerId}"
   sendPosition()
+  
+  context = new webkitAudioContext()
+  sequencer = new Sequencer(context, data.sound, () ->
+    sequencer.start()
+  )
+  
 )
 
 

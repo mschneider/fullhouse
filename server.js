@@ -6,16 +6,29 @@ World = (function() {
   function World() {
     this.positions = {};
     this.updates = {};
+    this.playerCount = 0;
     this.lastPlayerId = 0;
+    this.currentTime = 0;
   }
 
+  World.prototype.getCurrentTime = function() {
+    return this.currentTime;
+  };
+
   World.prototype.addPlayer = function() {
+    this.playerCount++;
     return "" + this.lastPlayerId++;
   };
 
   World.prototype.removePlayer = function(playerId) {
+    this.playerCount--;
+    if (this.playerCount === 0) this.lastPlayerId = 0;
     delete this.positions[playerId];
     return this.stopUpdates;
+  };
+
+  World.prototype.getPlayerCount = function() {
+    return this.playerCount;
   };
 
   World.prototype.setPosition = function(playerId, position) {
@@ -76,7 +89,11 @@ io.sockets.on('connection', function(socket) {
   playerId = world.addPlayer();
   socket.set('playerId', playerId, function() {
     console.log("Welcome, player " + playerId);
-    socket.emit('ready', playerId);
+    socket.emit('ready', {
+      playerId: playerId,
+      playerCount: world.getPlayerCount(),
+      sound: playerId % 2
+    });
     return world.startUpdates(playerId, function(positions) {
       if (positions != null) return socket.emit('otherPositions', positions);
     });

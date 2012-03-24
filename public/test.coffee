@@ -12,8 +12,6 @@ timeout = 500
 sequencer = null
 
 $ ->
-  context = new webkitAudioContext()
-  sequencer = new Sequencer context
   return
   $('#box').mousemove (e) ->
     if busy

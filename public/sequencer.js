@@ -2,24 +2,26 @@ var Sequencer;
 
 Sequencer = (function() {
 
-  function Sequencer(context) {
+  function Sequencer(context, sound, cb) {
     var _this = this;
     this.context = context;
+    this.sound = sound;
     this.nextStepTime = 0.0;
     this.stepIndex = 0;
     this.tempo = 120.0;
-    loadSound('c2', function(response) {
+    loadSound("c" + (this.sound + 2), function(response) {
       return _this.context.decodeAudioData(response, function(buffer) {
-        return _this.buffer = buffer;
+        _this.buffer = buffer;
+        return cb();
       });
     });
   }
 
   Sequencer.prototype.run = function() {
-    var time;
-    var _this = this;
+    var time,
+      _this = this;
     time = this.context.currentTime - this.startTime;
-    while (this.nextStepTime < time + 0.04) {
+    while (this.nextStepTime < time + 0.04 && Math.random() < 0.5) {
       this.scheduleStep();
       this.nextStepTime += this.stepDifference();
     }

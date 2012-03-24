@@ -6,14 +6,27 @@ class World
   constructor : () ->
     @positions = {}
     @updates = {}
+    @playerCount = 0
     @lastPlayerId = 0
+    @currentTime = 0
+  
+  getCurrentTime : () ->
+    @currentTime
     
   addPlayer : () ->
+    @playerCount++
     "" + @lastPlayerId++
     
   removePlayer : (playerId) ->
+    @playerCount--
+    if @playerCount == 0
+      @lastPlayerId = 0
+    
     delete @positions[playerId]
     @stopUpdates
+    
+  getPlayerCount : () ->
+    @playerCount
     
   setPosition : (playerId, position) ->
     @positions[playerId] = position
@@ -48,7 +61,6 @@ app.use(express.static 'public')
 
 timeout = 10
 
-
 port = process.env.PORT || 3000
 app.listen(port, () ->
   console.log "Listening on " + port
@@ -59,7 +71,12 @@ io.sockets.on('connection', (socket) ->
   
   socket.set('playerId', playerId, () ->
     console.log "Welcome, player #{playerId}"
-    socket.emit('ready', playerId)
+    
+    socket.emit('ready',  {
+      playerId: playerId
+      playerCount : world.getPlayerCount()
+      sound : playerId % 2
+    })
     
     world.startUpdates(playerId, (positions) ->
       if positions?

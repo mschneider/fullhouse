@@ -20,9 +20,6 @@ timeout = 500;
 sequencer = null;
 
 $(function() {
-  var context;
-  context = new webkitAudioContext();
-  sequencer = new Sequencer(context);
   return;
   $('#box').mousemove(function(e) {
     var sourceC2, sourceC3;

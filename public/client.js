@@ -55,9 +55,14 @@ $(function() {
 
 socket = io.connect('/');
 
-socket.on('ready', function(playerId) {
-  console.log("Welcome, player " + playerId);
-  return sendPosition();
+socket.on('ready', function(data) {
+  var context, sequencer;
+  console.log("Welcome, player " + data.playerId);
+  sendPosition();
+  context = new webkitAudioContext();
+  return sequencer = new Sequencer(context, data.sound, function() {
+    return sequencer.start();
+  });
 });
 
 socket.on('otherPositions', function(positions) {
