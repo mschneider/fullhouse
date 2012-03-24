@@ -36,7 +36,7 @@ Player = (function() {
   };
 
   Player.prototype.enqueueStates = function(states) {
-    return this.queuedStates.push(state);
+    return this.queuedStates.push(states);
   };
 
   Player.prototype.popStates = function() {
@@ -74,9 +74,9 @@ Connection = (function() {
 
   Connection.prototype.onReceivingStates = function(states) {
     var playerId, playerX, state, _results;
-    console.log(states);
     this.player.enqueueStates(states);
     $('#box').html('');
+    console.log(states);
     _results = [];
     for (playerId in states) {
       if (!__hasProp.call(states, playerId)) continue;

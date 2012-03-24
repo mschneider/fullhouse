@@ -135,6 +135,10 @@ app.listen(port, function() {
 
 world = new World();
 
+io.configure(function() {
+  return io.set("log level", 2);
+});
+
 io.sockets.on('connection', function(socket) {
   return new Player(socket);
 });

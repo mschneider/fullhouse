@@ -102,6 +102,11 @@ app.listen(port, () ->
 
 world = new World()
 
+io.configure(() ->
+  io.set("log level", 2)
+)
+
+
 io.sockets.on('connection', (socket) -> 
   new Player(socket)
 )

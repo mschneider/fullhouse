@@ -26,7 +26,7 @@ class Player
     @state.setActive(active)
     
   enqueueStates : (states) ->
-    @queuedStates.push(state)
+    @queuedStates.push(states)
       
   popStates : ->
     @queuedStates.shift()
@@ -52,9 +52,9 @@ class Connection
     @socket.emit('changedState', state)
 
   onReceivingStates : (states) =>
-    console.log(states)
     @player.enqueueStates(states)
     $('#box').html('')
+    console.log(states)
     for own playerId, state of states
       playerX = $('<div></div>')
       playerX.css({
