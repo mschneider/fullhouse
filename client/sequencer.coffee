@@ -10,7 +10,7 @@ class Sequencer
   run: ->
     time = @context.currentTime - @startTime
     while @nextStepTime < time + 0.04
-      @scheduleStep @startTime + @nextStepTime
+      @scheduleStep @startTime + time
       @nextStepTime += @stepDifference()
     setTimeout (=> @run()), 0
 

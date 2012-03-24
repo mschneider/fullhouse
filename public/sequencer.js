@@ -22,7 +22,7 @@ Sequencer = (function() {
     var _this = this;
     time = this.context.currentTime - this.startTime;
     while (this.nextStepTime < time + 0.04) {
-      this.scheduleStep(this.startTime + this.nextStepTime);
+      this.scheduleStep(this.startTime + time);
       this.nextStepTime += this.stepDifference();
     }
     return setTimeout((function() {

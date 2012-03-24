@@ -1,5 +1,5 @@
-var Point, currentPosition, sendPosition, socket, timeout,
-  __hasProp = Object.prototype.hasOwnProperty;
+var Point, currentPosition, sendPosition, socket, timeout;
+var __hasProp = Object.prototype.hasOwnProperty;
 
 timeout = 10;
 
@@ -60,9 +60,7 @@ socket.on('ready', function(data) {
   console.log("Welcome, player " + data.playerId);
   sendPosition();
   context = new webkitAudioContext();
-  return sequencer = new Sequencer(context, data.sound, function() {
-    return sequencer.start();
-  });
+  return sequencer = new Sequencer(context, data.sound, function() {});
 });
 
 socket.on('otherPositions', function(positions) {
