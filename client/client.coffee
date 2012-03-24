@@ -1,67 +1,126 @@
-
-timeout = 10
+# A state of a player
+class PlayerState
   
-class Point
-  
-  constructor : (x, y) ->
-    @x = x | 0
-    @y = y | 0
+  constructor : (x, y, active) ->
+    if typeof x == "object"
+      @active = x.active
+      @x = x.x
+      @y = x.y
+    else
+      @active = active | false
+      @x = x | 0
+      @y = y | 0
     
-  equals : (point) -> 
-    point? && point.x is @x && point.y is @y
+  equals : (otherState) ->
+    otherState? && otherState.x == @x && otherState.y == @y && otherState.active == @active
     
-  set : (x, y) ->
+  setPosition : (x, y) ->
     @x = x
     @y = y
     
-  copy : () ->
-    new Point(@x, @y)
+  setActive : (active) ->
+    @active = active
     
-  values : () ->
-    {x: @x, y: @y}
+  copy : ->
+    new PlayerState(@x, @y, @active)
+    
+  values : ->
+    {x: @x, y: @y, active: @active}
+    
+# The current player
+class Player
+  
+  @timeout : 200
+  
+  constructor : (changedCallback) ->
+    @changedCallback = changedCallback
+    @queuedStates = []
+    @state = new PlayerState()
+  
+  sendUpdate : ->
+     if !@state.equals(@lastState)
+       @changedCallback(@state.values())
+     @lastState = @state.copy()
+     
+  startUpdating : ->
+    @sendUpdate()
+    window.setTimeout(() =>
+      @startUpdating()
+    , Player.timeout)
+    
+  getState : () ->
+    @state
+    
+  setPosition : (x , y) ->
+    @state.setPosition(x, y)
+      
+  setActive : (active) ->
+    @state.setActive(active)
+    
+  enqueueStates : (states) ->
+    @queuedStates.push(states)
+      
+  popStates : ->
+    states = @queuedStates.shift()
+    if !states?
+      states = {}
+    states
 
-sendPosition = (lastPosition) ->
-  position = currentPosition.copy()
-  if !position.equals(lastPosition)
-    socket.emit('playerPosition', position.values())
-  window.setTimeout(() -> 
-    sendPosition(position)
-  , timeout)
+# Handles the connection between client and server
+class Connection 
+  constructor : ->
+    @player = new Player(@onChangedState)
+    @socket = io.connect '/'
+    @socket.on('ready', @onReady)
+    @socket.on('receivingStates', @onReceivingStates)
+    
+  getPlayer : ->
+    @player
 
-currentPosition = new Point()
+  onReady : (data) =>
+    console.log "Welcome, player #{data.playerId}"
+    @player.startUpdating()
+    @play()
+
+    context = new webkitAudioContext()
+    sequencer = new Sequencer(context, data.sound, () ->
+      sequencer.start()
+    )
+    
+  onChangedState : (state) =>
+    @socket.emit('changedState', state)
+
+  onReceivingStates : (states) =>
+    @player.enqueueStates(states)
+    
+  play : () ->
+    states = @player.popStates()
+    states['self'] = @player.getState()
+    
+    #  Draw
+    canvas = document.getElementById('box')
+    context = canvas.getContext("2d")
+    context.clearRect(0, 0, canvas.width, canvas.height)
+    
+    worstRTT = 0
+    for own playerId, state of states
+      context.fillRect(state.x, state.y, 10, 10)
+    
+    $('#info').html('States: ' + JSON.stringify(states))
+    
+    window.setTimeout(() =>
+      @play()
+    , Player.timeout)
+
+connection = new Connection()
 
 $ ->
   $('#box').mousemove((e) ->
-    currentPosition.set(e.offsetX, e.offsetY)
+    connection.getPlayer().setPosition(e.offsetX, e.offsetY)
   )
-
-socket = io.connect '/'
-
-socket.on('ready', (data) ->
-  console.log "Welcome, player #{data.playerId}"
-  sendPosition()
-  
-  context = new webkitAudioContext()
-  sequencer = new Sequencer(context, data.sound, () ->
-    #sequencer.start()
+  $('#box').mousedown((e) ->
+    connection.getPlayer().setActive(true)
   )
-  
-)
-
-
-socket.on('otherPositions', (positions) ->
-  $('#box').html('')
-  for own playerId, position of positions
-    player = $('<div></div>')
-    player.css({
-       border: "1px solid black"
-       height: 1
-       width: 1
-       position: 'absolute'
-       left: position.x
-       top: position.y
-    })
-    $('#box').append(player)
-)
-
-
+  $('#box').mouseup((e) ->
+    connection.getPlayer().setActive(false)
+  )

@@ -1,11 +1,6 @@
-<<<<<<< HEAD
-var World, app, express, io, port, timeout, world;
-var __hasProp = Object.prototype.hasOwnProperty;
-=======
 var Player, World, app, express, io, port, world,
   __hasProp = Object.prototype.hasOwnProperty,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
->>>>>>> e7ecddc32e38d6597fa90badf4729f2c0fbbb92e
 
 World = (function() {
 
