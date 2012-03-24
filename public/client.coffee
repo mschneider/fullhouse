@@ -17,7 +17,7 @@ sendPosition = () ->
   , timeout)
 
 
-socket = io.connect 'http://localhost'
+socket = io.connect '/'
 
 socket.on('ready', (playerId) ->
   console.log "Welcome, player #{playerId}"
