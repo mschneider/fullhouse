@@ -37,8 +37,7 @@ PlayerState = (function() {
     return {
       x: this.x,
       y: this.y,
-      active: this.active,
-      time: Date.now()
+      active: this.active
     };
   };
 
@@ -88,7 +87,10 @@ Player = (function() {
   };
 
   Player.prototype.popStates = function() {
-    return this.queuedStates.shift();
+    var states;
+    states = this.queuedStates.shift();
+    if (!(states != null)) states = {};
+    return states;
   };
 
   return Player;
@@ -106,10 +108,15 @@ Connection = (function() {
     this.socket.on('receivingStates', this.onReceivingStates);
   }
 
+  Connection.prototype.getPlayer = function() {
+    return this.player;
+  };
+
   Connection.prototype.onReady = function(data) {
     var context, sequencer;
     console.log("Welcome, player " + data.playerId);
     this.player.startUpdating();
+    this.play();
     context = new webkitAudioContext();
     return sequencer = new Sequencer(context, data.sound, function() {
       return sequencer.start();
@@ -121,9 +128,13 @@ Connection = (function() {
   };
 
   Connection.prototype.onReceivingStates = function(states) {
-    var canvas, context, currentTime, playerId, state, time, worstRTT;
-    currentTime = Date.now();
-    this.player.enqueueStates(states);
+    return this.player.enqueueStates(states);
+  };
+
+  Connection.prototype.play = function() {
+    var canvas, context, playerId, state, states, worstRTT,
+      _this = this;
+    states = this.player.popStates();
     states['self'] = this.player.getState();
     canvas = document.getElementById('box');
     context = canvas.getContext("2d");
@@ -132,15 +143,12 @@ Connection = (function() {
     for (playerId in states) {
       if (!__hasProp.call(states, playerId)) continue;
       state = states[playerId];
-      if ((time = currentTime - state.time) > worstRTT) worstRTT = time;
-      delete state.time;
       context.fillRect(state.x, state.y, 10, 10);
     }
-    return $('#info').html('States: ' + JSON.stringify(states) + ("<br>RTT: " + worstRTT));
-  };
-
-  Connection.prototype.getPlayer = function() {
-    return this.player;
+    $('#info').html('States: ' + JSON.stringify(states));
+    return window.setTimeout(function() {
+      return _this.play();
+    }, Player.timeout);
   };
 
   return Connection;

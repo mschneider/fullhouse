@@ -86,7 +86,6 @@ Player = (function() {
   Player.prototype.onChangedState = function(state) {
     var _this = this;
     return this.getPlayerId(function(id) {
-      console.log("Player " + id + " changed. " + (JSON.stringify(state)));
       return world.setState(id, state);
     });
   };

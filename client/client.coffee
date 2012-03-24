@@ -25,7 +25,7 @@ class PlayerState
     new PlayerState(@x, @y, @active)
     
   values : ->
-    {x: @x, y: @y, active: @active, time: Date.now()}
+    {x: @x, y: @y, active: @active}
     
 # The current player
 class Player
@@ -61,7 +61,10 @@ class Player
     @queuedStates.push(states)
       
   popStates : ->
-    @queuedStates.shift()
+    states = @queuedStates.shift()
+    if !states?
+      states = {}
+    states
 
 # Handles the connection between client and server
 class Connection 
@@ -70,10 +73,14 @@ class Connection
     @socket = io.connect '/'
     @socket.on('ready', @onReady)
     @socket.on('receivingStates', @onReceivingStates)
+    
+  getPlayer : ->
+    @player
 
   onReady : (data) =>
     console.log "Welcome, player #{data.playerId}"
     @player.startUpdating()
+    @play()
 
     context = new webkitAudioContext()
     sequencer = new Sequencer(context, data.sound, () ->
@@ -84,10 +91,11 @@ class Connection
     @socket.emit('changedState', state)
 
   onReceivingStates : (states) =>
-    currentTime = Date.now()
     @player.enqueueStates(states)
-    states['self'] = @player.getState()
     
+  play : () ->
+    states = @player.popStates()
+    states['self'] = @player.getState()
     
     #  Draw
     canvas = document.getElementById('box')
@@ -96,15 +104,13 @@ class Connection
     
     worstRTT = 0
     for own playerId, state of states
-      if (time = (currentTime - state.time)) > worstRTT
-        worstRTT = time
-      delete state.time
       context.fillRect(state.x, state.y, 10, 10)
     
-    $('#info').html('States: ' + JSON.stringify(states) + "<br>RTT: #{worstRTT}")
-  
-  getPlayer : ->
-    @player
+    $('#info').html('States: ' + JSON.stringify(states))
+    
+    window.setTimeout(() =>
+      @play()
+    , Player.timeout)
 
 connection = new Connection()
 
