@@ -1,26 +1,55 @@
-var currentPosition, sendPosition, socket, timeout,
+var Point, currentPosition, sendPosition, socket, timeout,
   __hasProp = Object.prototype.hasOwnProperty;
 
 timeout = 10;
 
-currentPosition = {
-  x: 0,
-  y: 0
+Point = (function() {
+
+  function Point(x, y) {
+    this.x = x | 0;
+    this.y = y | 0;
+  }
+
+  Point.prototype.equals = function(point) {
+    return (point != null) && point.x === this.x && point.y === this.y;
+  };
+
+  Point.prototype.set = function(x, y) {
+    this.x = x;
+    return this.y = y;
+  };
+
+  Point.prototype.copy = function() {
+    return new Point(this.x, this.y);
+  };
+
+  Point.prototype.values = function() {
+    return {
+      x: this.x,
+      y: this.y
+    };
+  };
+
+  return Point;
+
+})();
+
+sendPosition = function(lastPosition) {
+  var position;
+  position = currentPosition.copy();
+  if (!position.equals(lastPosition)) socket.emit('playerPosition', position);
+  return window.setTimeout(function() {
+    return sendPosition(position);
+  }, timeout);
 };
+
+currentPosition = new Point();
 
 $(function() {
   return $('#box').mousemove(function(e) {
-    currentPosition.x = e.offsetX;
-    return currentPosition.y = e.offsetY;
+    return currentPosition.set(e.offsetX, e.offsetY);
   });
 });
-
-sendPosition = function() {
-  socket.emit('playerPosition', currentPosition);
-  return window.setTimeout(function() {
-    return sendPosition();
-  }, timeout);
-};
 
 socket = io.connect('/');
 

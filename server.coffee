@@ -20,9 +20,14 @@ class World
     
   getPositions : (targetPlayerId) ->
     otherPositions = {}
+    lenght = 0
     for own playerId, position of @positions
       if (playerId != targetPlayerId)
+        lenght++
         otherPositions[playerId] = position
+        
+    if lenght == 0
+      otherPositions = null
     otherPositions
     
   startUpdates : (playerId, cb) ->
@@ -57,7 +62,8 @@ io.sockets.on('connection', (socket) ->
     socket.emit('ready', playerId)
     
     world.startUpdates(playerId, (positions) ->
-      socket.emit('otherPositions', positions)
+      if positions?
+        socket.emit('otherPositions', positions)
     )
   )
 

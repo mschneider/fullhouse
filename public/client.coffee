@@ -1,21 +1,40 @@
 
 timeout = 10
+  
+class Point
+  
+  constructor : (x, y) ->
+    @x = x | 0
+    @y = y | 0
+    
+  equals : (point) -> 
+    point? && point.x is @x && point.y is @y
+    
+  set : (x, y) ->
+    @x = x
+    @y = y
+    
+  copy : () ->
+    new Point(@x, @y)
+    
+  values : () ->
+    {x: @x, y: @y}
 
-currentPosition = {x: 0, y: 0}
+sendPosition = (lastPosition) ->
+  position = currentPosition.copy()
+  if !position.equals(lastPosition)
+    socket.emit('playerPosition', position)
+  window.setTimeout(() -> 
+    sendPosition(position)
+  , timeout)
 
+
+currentPosition = new Point()
 
 $ ->
   $('#box').mousemove((e) ->
-    currentPosition.x = e.offsetX
-    currentPosition.y = e.offsetY
+    currentPosition.set(e.offsetX, e.offsetY)
   )
-
-sendPosition = () ->
-  socket.emit('playerPosition', currentPosition)
-  window.setTimeout(() -> 
-    sendPosition()
-  , timeout)
-
 
 socket = io.connect '/'
 
@@ -39,4 +58,5 @@ socket.on('otherPositions', (positions) ->
     })
     $('#box').append(player)
 )
+
 

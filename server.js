@@ -23,14 +23,19 @@ World = (function() {
   };
 
   World.prototype.getPositions = function(targetPlayerId) {
-    var otherPositions, playerId, position, _ref;
+    var lenght, otherPositions, playerId, position, _ref;
     otherPositions = {};
+    lenght = 0;
     _ref = this.positions;
     for (playerId in _ref) {
       if (!__hasProp.call(_ref, playerId)) continue;
       position = _ref[playerId];
-      if (playerId !== targetPlayerId) otherPositions[playerId] = position;
+      if (playerId !== targetPlayerId) {
+        lenght++;
+        otherPositions[playerId] = position;
+      }
     }
+    if (lenght === 0) otherPositions = null;
     return otherPositions;
   };
 
@@ -73,7 +78,7 @@ io.sockets.on('connection', function(socket) {
     console.log("Welcome, player " + playerId);
     socket.emit('ready', playerId);
     return world.startUpdates(playerId, function(positions) {
-      return socket.emit('otherPositions', positions);
+      if (positions != null) return socket.emit('otherPositions', positions);
     });
   });
   socket.on('playerPosition', function(position) {
