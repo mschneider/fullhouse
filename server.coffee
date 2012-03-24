@@ -1,19 +1,11 @@
-
-
-
 class World
   
-  constructor : () ->
-    @positions = {}
-    @updates = {}
+  constructor : ->
+    @states = {}
     @playerCount = 0
     @lastPlayerId = 0
-    @currentTime = 0
-  
-  getCurrentTime : () ->
-    @currentTime
     
-  addPlayer : () ->
+  addPlayer : ->
     @playerCount++
     "" + @lastPlayerId++
     
@@ -22,36 +14,80 @@ class World
     if @playerCount == 0
       @lastPlayerId = 0
     
-    delete @positions[playerId]
-    @stopUpdates
+    delete @states[playerId]
     
-  getPlayerCount : () ->
+  getPlayerCount : ->
     @playerCount
     
-  setPosition : (playerId, position) ->
-    @positions[playerId] = position
+  setState : (playerId, state) ->
+    @states[playerId] = state
     
-  getPositions : (targetPlayerId) ->
-    otherPositions = {}
+  getStates : (targetPlayerId) ->
+    otherStates = {}
     lenght = 0
-    for own playerId, position of @positions
+    for own playerId, state of @states
       if (playerId != targetPlayerId)
         lenght++
-        otherPositions[playerId] = position
+        otherStates[playerId] = state
         
     if lenght == 0
-      otherPositions = null
-    otherPositions
-    
-  startUpdates : (playerId, cb) ->
-    cb(@getPositions(playerId))
-    @updates[playerId] = setTimeout(() =>
-      @startUpdates(playerId, cb)
-    , timeout)
-    
-  stopUpdates : (playerId) ->
-    clearTimeout @updates[playerId]
+      otherStates = null
+    otherStates
   
+
+class Player
+  
+  @timeout : 100
+
+  constructor : (socket) ->
+    @socket = socket
+    socket.set('playerId', world.addPlayer(), () =>
+      @getPlayerId(@onReady)
+      socket.on('changedState', @onChangedState)
+      socket.on('disconnect', @onDisconnect)
+    )
+  
+  getPlayerId : (cb) ->
+    @socket.get('playerId', (err, playerId) ->
+      cb(playerId)
+    )
+    
+  onReady : (id) =>
+    console.log "Player #{id} connected."
+    @socket.emit('ready', {
+      playerId : id
+      playerCount : world.getPlayerCount()
+      sound : id % 2
+    })
+    @startStateSending()
+
+  onChangedState : (state) =>
+    @getPlayerId((id) =>
+      # console.log "Player #{id} changed."
+      world.setState(id, state) 
+    )
+    
+    
+  onDisconnect : () =>
+    @getPlayerId((id) =>
+      console.log "Player #{id} disconnected."
+      world.removePlayer(id)
+      @stopStateSending()
+    )
+
+  startStateSending : () ->
+    @getPlayerId((id) =>
+      states = world.getStates(id)
+      if states?
+        @socket.emit('receivingStates', states)
+      @updateTimer = setTimeout(() =>
+        @startStateSending()
+      , Player.timeout)
+    )
+    
+  stopStateSending : () ->
+    clearTimeout @updateTimer
+    
 
 express = require('express')
 app = express.createServer()
@@ -59,47 +95,13 @@ io = require('socket.io').listen app
 
 app.use(express.static 'public')
 
-timeout = 10
-
 port = process.env.PORT || 3000
 app.listen(port, () ->
   console.log "Listening on " + port
 )
 
+world = new World()
+
 io.sockets.on('connection', (socket) -> 
-  playerId = world.addPlayer()
-  
-  socket.set('playerId', playerId, () ->
-    console.log "Welcome, player #{playerId}"
-    
-    socket.emit('ready',  {
-      playerId: playerId
-      playerCount : world.getPlayerCount()
-      sound : playerId % 2
-    })
-    
-    world.startUpdates(playerId, (positions) ->
-      if positions?
-        socket.emit('otherPositions', positions)
-    )
-  )
-
-  socket.on('playerPosition', (position) ->
-    socket.get('playerId', (err, playerId) ->
-      world.setPosition(playerId, position)
-    )
-  )
-  
-  socket.on('disconnect', () ->
-    socket.get('playerId', (err, playerId) ->
-      console.log "Goodbye, player #{playerId}"
-      world.removePlayer(playerId)
-    )
-  )
+  new Player(socket)
 )
-
-
-world = new World
-
-
-

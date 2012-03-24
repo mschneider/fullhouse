@@ -3,14 +3,15 @@ class Sequencer
     @nextStepTime = 0.0
     @stepIndex = 0
     @tempo = 120.0
-    loadSound "c#{@sound + 2}", (response) =>
+    
+    loadSound "c2", (response) =>
       @context.decodeAudioData response, (buffer) =>
         @buffer = buffer
         cb()
 
   run: ->
     time = @context.currentTime - @startTime
-    while @nextStepTime < time + 0.04 && Math.random() < 0.5
+    while @nextStepTime < time + 0.04
       @scheduleStep()
       @nextStepTime += @stepDifference()
     setTimeout (=> @run()), 0

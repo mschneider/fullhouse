@@ -9,7 +9,7 @@ Sequencer = (function() {
     this.nextStepTime = 0.0;
     this.stepIndex = 0;
     this.tempo = 120.0;
-    loadSound("c" + (this.sound + 2), function(response) {
+    loadSound("c2", function(response) {
       return _this.context.decodeAudioData(response, function(buffer) {
         _this.buffer = buffer;
         return cb();
@@ -21,7 +21,7 @@ Sequencer = (function() {
     var time,
       _this = this;
     time = this.context.currentTime - this.startTime;
-    while (this.nextStepTime < time + 0.04 && Math.random() < 0.5) {
+    while (this.nextStepTime < time + 0.04) {
       this.scheduleStep();
       this.nextStepTime += this.stepDifference();
     }

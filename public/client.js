@@ -1,87 +1,120 @@
-var Point, currentPosition, sendPosition, socket, timeout,
+var Connection, Player, connection, randomEvent,
+  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = Object.prototype.hasOwnProperty;
 
-timeout = 10;
+Player = (function() {
 
-Point = (function() {
+  Player.timeout = 100;
 
-  function Point(x, y) {
-    this.x = x | 0;
-    this.y = y | 0;
+  function Player(changedCallback) {
+    this.changedCallback = changedCallback;
+    this.queuedStates = [];
+    this.state = new PlayerState();
   }
 
-  Point.prototype.equals = function(point) {
-    return (point != null) && point.x === this.x && point.y === this.y;
+  Player.prototype.sendUpdate = function() {
+    if (!this.state.equals(this.lastState)) {
+      this.changedCallback(this.state.values());
+    }
+    return this.lastState = this.state.copy();
   };
 
-  Point.prototype.set = function(x, y) {
-    this.x = x;
-    return this.y = y;
+  Player.prototype.startUpdating = function() {
+    var _this = this;
+    this.sendUpdate();
+    return window.setTimeout(function() {
+      return _this.startUpdating();
+    }, Player.timeout);
   };
 
-  Point.prototype.copy = function() {
-    return new Point(this.x, this.y);
+  Player.prototype.setPosition = function(x, y) {
+    return this.state.setPosition(x, y);
   };
 
-  Point.prototype.values = function() {
-    return {
-      x: this.x,
-      y: this.y
-    };
+  Player.prototype.setActive = function(active) {
+    return this.state.setActive(active);
   };
 
-  return Point;
+  Player.prototype.enqueueStates = function(states) {
+    return this.queuedStates.push(state);
+  };
+
+  Player.prototype.popStates = function() {
+    return this.queuedStates.shift();
+  };
+
+  return Player;
 
 })();
 
-sendPosition = function(lastPosition) {
-  var position;
-  position = currentPosition.copy();
-  if (!position.equals(lastPosition)) {
-    socket.emit('playerPosition', position.values());
-  }
-  return window.setTimeout(function() {
-    return sendPosition(position);
-  }, timeout);
-};
+Connection = (function() {
 
-currentPosition = new Point();
+  function Connection() {
+    this.onReceivingStates = __bind(this.onReceivingStates, this);
+    this.onChangedState = __bind(this.onChangedState, this);
+    this.onReady = __bind(this.onReady, this);    this.player = new Player(this.onChangedState);
+    this.socket = io.connect('/');
+    this.socket.on('ready', this.onReady);
+    this.socket.on('receivingStates', this.onReceivingStates);
+  }
+
+  Connection.prototype.onReady = function(data) {
+    var context, sequencer;
+    console.log("Welcome, player " + data.playerId);
+    this.player.startUpdating();
+    context = new webkitAudioContext();
+    return sequencer = new Sequencer(context, data.sound, function() {
+      return sequencer.start();
+    });
+  };
+
+  Connection.prototype.onChangedState = function(state) {
+    return this.socket.emit('changedState', state);
+  };
+
+  Connection.prototype.onReceivingStates = function(states) {
+    var playerId, playerX, state, _results;
+    console.log(states);
+    this.player.enqueueStates(states);
+    $('#box').html('');
+    _results = [];
+    for (playerId in states) {
+      if (!__hasProp.call(states, playerId)) continue;
+      state = states[playerId];
+      playerX = $('<div></div>');
+      playerX.css({
+        border: "1px solid black",
+        height: 1,
+        width: 1,
+        position: 'absolute',
+        left: state.x,
+        top: state.y
+      });
+      _results.push($('#box').append(playerX));
+    }
+    return _results;
+  };
+
+  Connection.prototype.getPlayer = function() {
+    return this.player;
+  };
+
+  return Connection;
+
+})();
+
+connection = new Connection();
+
+randomEvent = null;
 
 $(function() {
-  return $('#box').mousemove(function(e) {
-    return currentPosition.set(e.offsetX, e.offsetY);
+  $('#box').mousemove(function(e) {
+    return connection.getPlayer().setPosition(e.offsetX, e.offsetY);
   });
-});
-
-socket = io.connect('/');
-
-socket.on('ready', function(data) {
-  var context, sequencer;
-  console.log("Welcome, player " + data.playerId);
-  sendPosition();
-  context = new webkitAudioContext();
-  return sequencer = new Sequencer(context, data.sound, function() {
-    return sequencer.start();
+  $('#box').mousedown(function(e) {
+    return connection.getPlayer().setActive(true);
   });
-});
-
-socket.on('otherPositions', function(positions) {
-  var player, playerId, position, _results;
-  $('#box').html('');
-  _results = [];
-  for (playerId in positions) {
-    if (!__hasProp.call(positions, playerId)) continue;
-    position = positions[playerId];
-    player = $('<div></div>');
-    player.css({
-      border: "1px solid black",
-      height: 1,
-      width: 1,
-      position: 'absolute',
-      left: position.x,
-      top: position.y
-    });
-    _results.push($('#box').append(player));
-  }
-  return _results;
+  return $('#box').mouseup(function(e) {
+    return connection.getPlayer().setActive(false);
+  });
 });
