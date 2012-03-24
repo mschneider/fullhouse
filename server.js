@@ -95,8 +95,7 @@ Player = (function() {
     return this.getPlayerId(function(id) {
       console.log("Player " + id + " disconnected.");
       world.removePlayer(id);
-      _this.stopStateSending();
-      return _this.socket.broadcast.emit('playerDisconnected', id);
+      return _this.stopStateSending();
     });
   };
 
