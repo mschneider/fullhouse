@@ -1,6 +1,6 @@
-var filter, loadSound;
+var busy, c2b, c3b, filter, loadSound, sequencer, timeout;
 
-filter = null;
+filter = c2b = c3b = null;
 
 loadSound = function(name, cb) {
   var request;
@@ -13,12 +13,36 @@ loadSound = function(name, cb) {
   return request.send();
 };
 
+busy = false;
+
+timeout = 500;
+
+sequencer = null;
+
 $(function() {
   var context;
+  context = new webkitAudioContext();
+  sequencer = new Sequencer(context);
+  return;
   $('#box').mousemove(function(e) {
+    var sourceC2, sourceC3;
+    if (busy) return;
+    busy = true;
+    setTimeout(function() {
+      return busy = false;
+    }, timeout);
+    filter.frequency.value = 7000 * (e.offsetY / 300);
+    console.log("freq:" + filter.frequency.value);
+    sourceC2 = context.createBufferSource();
+    sourceC2.buffer = c2b;
+    sourceC2.connect(filter);
+    sourceC3 = context.createBufferSource();
+    sourceC3.buffer = c3b;
+    sourceC3.connect(filter);
+    sourceC2.noteOn(0);
+    sourceC3.noteOn(0);
     return $('#info').html(e.offsetX + ', ' + e.offsetY);
   });
-  context = new webkitAudioContext();
   loadSound('beat', function(response) {
     return context.decodeAudioData(response, function(buffer) {
       var source;
@@ -31,25 +55,14 @@ $(function() {
   });
   return loadSound('c2', function(response) {
     return context.decodeAudioData(response, function(buffer) {
-      var sourceC2;
-      sourceC2 = context.createBufferSource();
-      sourceC2.buffer = buffer;
-      sourceC2.loop = true;
+      c2b = buffer;
       return loadSound('c3', function(response) {
         return context.decodeAudioData(response, function(buffer) {
-          var sourceC3;
-          sourceC3 = context.createBufferSource();
-          sourceC3.buffer = buffer;
-          sourceC3.loop = true;
+          c3b = buffer;
           filter = context.createBiquadFilter();
-          sourceC2.connect(filter);
-          sourceC3.connect(filter);
           filter.connect(context.destination);
           filter.type = 6;
-          filter.frequency.value = 440;
-          filter.Q.value = 1;
-          sourceC2.noteOn(0);
-          return sourceC3.noteOn(0);
+          return filter.Q.value = 1;
         });
       });
     });
