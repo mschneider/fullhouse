@@ -1,31 +1,24 @@
 # A state of a player
 class PlayerState
   
-  constructor : (x, y, active) ->
-    if typeof x == "object"
-      @active = x.active
-      @x = x.x
-      @y = x.y
-    else
-      @active = active | false
-      @x = x | 0
-      @y = y | 0
+  constructor : (y, active) ->
+    @active = active | false
+    @y = y | 0
     
   equals : (otherState) ->
-    otherState? && otherState.x == @x && otherState.y == @y && otherState.active == @active
+    otherState? && otherState.y == @y && otherState.active == @active
     
-  setPosition : (x, y) ->
-    @x = x
+  setPosition : (y) ->
     @y = y
     
   setActive : (active) ->
     @active = active
     
   copy : ->
-    new PlayerState(@x, @y, @active)
+    new PlayerState(@y, @active)
     
   values : ->
-    {x: @x, y: @y, active: @active}
+    {y: @y, active: @active}
     
 # The current player
 class Player
@@ -51,8 +44,8 @@ class Player
   getState : () ->
     @state
     
-  setPosition : (x , y) ->
-    @state.setPosition(x, y)
+  setPosition : (y) ->
+    @state.setPosition(y)
       
   setActive : (active) ->
     @state.setActive(active)
@@ -92,35 +85,54 @@ class Connection
 
   onReceivingStates : (states) =>
     @player.enqueueStates(states)
-    
+  
   play : () ->
     states = @player.popStates()
     states['self'] = @player.getState()
     
-    #  Draw
-    canvas = document.getElementById('box')
-    context = canvas.getContext("2d")
-    context.clearRect(0, 0, canvas.width, canvas.height)
-    
-    worstRTT = 0
+    # Draw all mixers
+    updated = []
     for own playerId, state of states
-      context.fillRect(state.x, state.y, 10, 10)
+      updated.push(playerId)
+      element = "player_#{playerId}"
+      if $("##{element}").length == 0
+        $("#players").append(@createCanvas(element))
+      
+      canvas = document.getElementById(element)
+      context = canvas.getContext("2d")
+      context.clearRect(0, 0, canvas.width, canvas.height)
+      
+      if state.active
+        context.fillStyle = "orange"
+      else
+        context.fillStyle = "black"
+      context.fillRect(0, state.y, 50, 10)
+      
+    $('[id^="player_"]').each(() ->
+      element = $(@)
+      tmp = element.attr('id').split('_')
+      if $.inArray(tmp[1], updated) == -1
+        element.remove()
+    )
     
     $('#info').html('States: ' + JSON.stringify(states))
-    
     window.setTimeout(() =>
       @play()
     , Player.timeout)
+    
+  createCanvas : (id) ->
+    "<canvas width=\"50\" height=\"500\" id=\"#{id}\"></canvas>"
 
 connection = new Connection()
 
 $ ->
-  $('#box').mousemove((e) ->
-    connection.getPlayer().setPosition(e.offsetX, e.offsetY)
+  $('#players').append(connection.createCanvas('player_self'))
+  $('#player_self').mousemove((e) ->
+    connection.getPlayer().setPosition(e.offsetY)
   )
-  $('#box').mousedown((e) ->
+  $('#player_self').mousedown((e) ->
     connection.getPlayer().setActive(true)
   )
-  $('#box').mouseup((e) ->
+  $('#player_self').mouseup((e) ->
     connection.getPlayer().setActive(false)
   )

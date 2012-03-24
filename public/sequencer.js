@@ -18,8 +18,8 @@ Sequencer = (function() {
   }
 
   Sequencer.prototype.run = function() {
-    var time;
-    var _this = this;
+    var time,
+      _this = this;
     time = this.context.currentTime - this.startTime;
     while (this.nextStepTime < time + 0.04) {
       this.scheduleStep(this.startTime + time);
