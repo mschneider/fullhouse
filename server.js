@@ -1,5 +1,5 @@
-var World, app, express, io, port, timeout, world,
-  __hasProp = Object.prototype.hasOwnProperty;
+var World, app, express, io, port, timeout, world;
+var __hasProp = Object.prototype.hasOwnProperty;
 
 World = (function() {
 

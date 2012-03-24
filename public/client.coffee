@@ -43,7 +43,7 @@ socket.on('ready', (data) ->
   
   context = new webkitAudioContext()
   sequencer = new Sequencer(context, data.sound, () ->
-    sequencer.start()
+    #sequencer.start()
   )
   
 )

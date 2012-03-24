@@ -1,4 +1,4 @@
-var busy, c2b, c3b, filter, loadSound, sequencer, timeout;
+var c2b, c3b, context, filter, loadSound, seq, sound;
 
 filter = c2b = c3b = null;
 
@@ -13,55 +13,17 @@ loadSound = function(name, cb) {
   return request.send();
 };
 
-busy = false;
-
-timeout = 500;
-
-sequencer = null;
+context = sound = seq = null;
 
 $(function() {
-  return;
-  $('#box').mousemove(function(e) {
-    var sourceC2, sourceC3;
-    if (busy) return;
-    busy = true;
-    setTimeout(function() {
-      return busy = false;
-    }, timeout);
-    filter.frequency.value = 7000 * (e.offsetY / 300);
-    console.log("freq:" + filter.frequency.value);
-    sourceC2 = context.createBufferSource();
-    sourceC2.buffer = c2b;
-    sourceC2.connect(filter);
-    sourceC3 = context.createBufferSource();
-    sourceC3.buffer = c3b;
-    sourceC3.connect(filter);
-    sourceC2.noteOn(0);
-    sourceC3.noteOn(0);
-    return $('#info').html(e.offsetX + ', ' + e.offsetY);
-  });
-  loadSound('beat', function(response) {
-    return context.decodeAudioData(response, function(buffer) {
-      var source;
-      source = context.createBufferSource();
-      source.buffer = buffer;
-      source.connect(context.destination);
-      source.loop = true;
-      return source.noteOn(0);
-    });
-  });
-  return loadSound('c2', function(response) {
-    return context.decodeAudioData(response, function(buffer) {
-      c2b = buffer;
-      return loadSound('c3', function(response) {
-        return context.decodeAudioData(response, function(buffer) {
-          c3b = buffer;
-          filter = context.createBiquadFilter();
-          filter.connect(context.destination);
-          filter.type = 6;
-          return filter.Q.value = 1;
-        });
-      });
+  var loader;
+  context = new webkitAudioContext();
+  loader = new WaveTableLoader(context);
+  return loader.load(function() {
+    console.log("loaded wave tables");
+    sound = new Sound(context, loader.getTable('TB303'), 0.01, 0.04);
+    return seq = new Sequencer(context, sound, 120.0, function() {
+      return console.log("loaded sequencer. call seq.start()");
     });
   });
 });

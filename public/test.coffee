@@ -7,46 +7,15 @@ loadSound = (name, cb) ->
   request.onload = () -> cb(request.response)
   request.send()
 
-busy = false
-timeout = 500
-sequencer = null
+context = sound = seq = null
 
 $ ->
-  return
-  $('#box').mousemove (e) ->
-    if busy
-      return
-    busy = true
-    setTimeout( () ->
-      busy = false
-    , timeout)
-    filter.frequency.value = 7000 * (e.offsetY / 300)
-    console.log "freq:#{filter.frequency.value}"
-    sourceC2 = context.createBufferSource()
-    sourceC2.buffer = c2b
-    sourceC2.connect filter
-    sourceC3 = context.createBufferSource()
-    sourceC3.buffer = c3b
-    sourceC3.connect filter
-    sourceC2.noteOn 0
-    sourceC3.noteOn 0
-    $('#info').html(e.offsetX + ', ' + e.offsetY)
-  loadSound 'beat', (response) ->
-    context.decodeAudioData response, (buffer) ->
-      source = context.createBufferSource()
-      source.buffer = buffer
-      source.connect context.destination
-      source.loop = true
-      source.noteOn 0
+  context = new webkitAudioContext()
+  #staticAudioRouting = new StaticAudioRouting(context)
+  loader = new WaveTableLoader(context)
+  loader.load () ->
+    console.log "loaded wave tables"
+    sound = new Sound context, loader.getTable('TB303'), 0.01, 0.04
+    seq = new Sequencer context, sound, 120.0, ->
+      console.log "loaded sequencer. call seq.start()"
 
-  loadSound 'c2', (response) ->
-    context.decodeAudioData response, (buffer) ->
-      c2b = buffer
-      loadSound 'c3', (response) ->
-        context.decodeAudioData response, (buffer) ->
-          c3b = buffer
-          filter = context.createBiquadFilter()
-          filter.connect context.destination
-          filter.type = 6
-          filter.Q.value = 1
-          
