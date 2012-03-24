@@ -37,7 +37,7 @@ class World
 
 class Player
   
-  @timeout : 100
+  @timeout : 200
 
   constructor : (socket) ->
     @socket = socket
@@ -63,7 +63,7 @@ class Player
 
   onChangedState : (state) =>
     @getPlayerId((id) =>
-      # console.log "Player #{id} changed."
+      # console.log "Player #{id} changed. #{JSON.stringify(state)}"
       world.setState(id, state) 
     )
     

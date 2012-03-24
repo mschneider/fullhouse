@@ -1,4 +1,4 @@
-var Connection, Player, PlayerState, connection, randomEvent,
+var Connection, Player, PlayerState, connection,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __hasProp = Object.prototype.hasOwnProperty;
 
@@ -16,8 +16,8 @@ PlayerState = (function() {
     }
   }
 
-  PlayerState.prototype.equals = function(otherPlayerState) {
-    return (otherPlayerState != null) && otherPlayerState.x === this.x && otherPlayerState.y === this.y && otherPlayerState.active === this.active;
+  PlayerState.prototype.equals = function(otherState) {
+    return (otherState != null) && otherState.x === this.x && otherState.y === this.y && otherState.active === this.active;
   };
 
   PlayerState.prototype.setPosition = function(x, y) {
@@ -37,7 +37,8 @@ PlayerState = (function() {
     return {
       x: this.x,
       y: this.y,
-      active: this.active
+      active: this.active,
+      time: Date.now()
     };
   };
 
@@ -47,7 +48,7 @@ PlayerState = (function() {
 
 Player = (function() {
 
-  Player.timeout = 100;
+  Player.timeout = 200;
 
   function Player(changedCallback) {
     this.changedCallback = changedCallback;
@@ -68,6 +69,10 @@ Player = (function() {
     return window.setTimeout(function() {
       return _this.startUpdating();
     }, Player.timeout);
+  };
+
+  Player.prototype.getState = function() {
+    return this.state;
   };
 
   Player.prototype.setPosition = function(x, y) {
@@ -116,26 +121,22 @@ Connection = (function() {
   };
 
   Connection.prototype.onReceivingStates = function(states) {
-    var playerId, playerX, state, _results;
+    var canvas, context, currentTime, playerId, state, time, worstRTT;
+    currentTime = Date.now();
     this.player.enqueueStates(states);
-    $('#box').html('');
-    console.log(states);
-    _results = [];
+    states['self'] = this.player.getState();
+    canvas = document.getElementById('box');
+    context = canvas.getContext("2d");
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    worstRTT = 0;
     for (playerId in states) {
       if (!__hasProp.call(states, playerId)) continue;
       state = states[playerId];
-      playerX = $('<div></div>');
-      playerX.css({
-        border: "1px solid black",
-        height: 1,
-        width: 1,
-        position: 'absolute',
-        left: state.x,
-        top: state.y
-      });
-      _results.push($('#box').append(playerX));
+      if ((time = currentTime - state.time) > worstRTT) worstRTT = time;
+      delete state.time;
+      context.fillRect(state.x, state.y, 10, 10);
     }
-    return _results;
+    return $('#info').html('States: ' + JSON.stringify(states) + ("<br>RTT: " + worstRTT));
   };
 
   Connection.prototype.getPlayer = function() {
@@ -147,8 +148,6 @@ Connection = (function() {
 })();
 
 connection = new Connection();
-
-randomEvent = null;
 
 $(function() {
   $('#box').mousemove(function(e) {

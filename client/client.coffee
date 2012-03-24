@@ -11,8 +11,8 @@ class PlayerState
       @x = x | 0
       @y = y | 0
     
-  equals : (otherPlayerState) ->
-    otherPlayerState? && otherPlayerState.x is @x && otherPlayerState.y is @y && otherPlayerState.active == @active
+  equals : (otherState) ->
+    otherState? && otherState.x == @x && otherState.y == @y && otherState.active == @active
     
   setPosition : (x, y) ->
     @x = x
@@ -25,12 +25,12 @@ class PlayerState
     new PlayerState(@x, @y, @active)
     
   values : ->
-    {x: @x, y: @y, active: @active}
+    {x: @x, y: @y, active: @active, time: Date.now()}
     
 # The current player
 class Player
   
-  @timeout : 100
+  @timeout : 200
   
   constructor : (changedCallback) ->
     @changedCallback = changedCallback
@@ -48,9 +48,12 @@ class Player
       @startUpdating()
     , Player.timeout)
     
+  getState : () ->
+    @state
+    
   setPosition : (x , y) ->
     @state.setPosition(x, y)
-    
+      
   setActive : (active) ->
     @state.setActive(active)
     
@@ -81,26 +84,29 @@ class Connection
     @socket.emit('changedState', state)
 
   onReceivingStates : (states) =>
+    currentTime = Date.now()
     @player.enqueueStates(states)
-    $('#box').html('')
-    console.log(states)
+    states['self'] = @player.getState()
+    
+    
+    #  Draw
+    canvas = document.getElementById('box')
+    context = canvas.getContext("2d")
+    context.clearRect(0, 0, canvas.width, canvas.height)
+    
+    worstRTT = 0
     for own playerId, state of states
-      playerX = $('<div></div>')
-      playerX.css({
-         border: "1px solid black"
-         height: 1
-         width: 1
-         position: 'absolute'
-         left: state.x
-         top: state.y
-      })
-      $('#box').append(playerX)
-      
+      if (time = (currentTime - state.time)) > worstRTT
+        worstRTT = time
+      delete state.time
+      context.fillRect(state.x, state.y, 10, 10)
+    
+    $('#info').html('States: ' + JSON.stringify(states) + "<br>RTT: #{worstRTT}")
+  
   getPlayer : ->
     @player
 
 connection = new Connection()
-randomEvent = null
 
 $ ->
   $('#box').mousemove((e) ->

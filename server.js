@@ -52,7 +52,7 @@ World = (function() {
 
 Player = (function() {
 
-  Player.timeout = 100;
+  Player.timeout = 200;
 
   function Player(socket) {
     this.onDisconnect = __bind(this.onDisconnect, this);
@@ -86,6 +86,7 @@ Player = (function() {
   Player.prototype.onChangedState = function(state) {
     var _this = this;
     return this.getPlayerId(function(id) {
+      console.log("Player " + id + " changed. " + (JSON.stringify(state)));
       return world.setState(id, state);
     });
   };
@@ -136,6 +137,10 @@ app.listen(port, function() {
 world = new World();
 
 io.configure(function() {
+  if (process.env.PORT != null) {
+    io.set("transports", ["xhr-polling"]);
+    io.set("polling duration", 10);
+  }
   return io.set("log level", 2);
 });
 
