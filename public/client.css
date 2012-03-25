@@ -1,0 +1,8 @@
+#players > * {
+  margin: 0 20px;
+  border: 1px solid black;
+}
+
+#player_self {
+  border: 1px solid red;
+}

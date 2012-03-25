@@ -1,67 +1,138 @@
-
-timeout = 10
+# A state of a player
+class PlayerState
   
-class Point
-  
-  constructor : (x, y) ->
-    @x = x | 0
+  constructor : (y, active) ->
+    @active = active | false
     @y = y | 0
     
-  equals : (point) -> 
-    point? && point.x is @x && point.y is @y
+  equals : (otherState) ->
+    otherState? && otherState.y == @y && otherState.active == @active
     
-  set : (x, y) ->
-    @x = x
+  setPosition : (y) ->
     @y = y
     
-  copy : () ->
-    new Point(@x, @y)
+  setActive : (active) ->
+    @active = active
     
-  values : () ->
-    {x: @x, y: @y}
+  copy : ->
+    new PlayerState(@y, @active)
+    
+  values : ->
+    {y: @y, active: @active}
+    
+# The current player
+class Player
+  
+  @timeout : 200
+  
+  constructor : (changedCallback) ->
+    @changedCallback = changedCallback
+    @queuedStates = []
+    @state = new PlayerState()
+  
+  sendUpdate : ->
+     if !@state.equals(@lastState)
+       @changedCallback(@state.values())
+     @lastState = @state.copy()
+     
+  startUpdating : ->
+    @sendUpdate()
+    window.setTimeout(() =>
+      @startUpdating()
+    , Player.timeout)
+    
+  getState : () ->
+    @state
+    
+  setPosition : (y) ->
+    @state.setPosition(y)
+      
+  setActive : (active) ->
+    @state.setActive(active)
+    
+  enqueueStates : (states) ->
+    @queuedStates.push(states)
+      
+  popStates : ->
+    states = @queuedStates.shift()
+    if !states?
+      states = {}
+    states
 
-sendPosition = (lastPosition) ->
-  position = currentPosition.copy()
-  if !position.equals(lastPosition)
-    socket.emit('playerPosition', position.values())
-  window.setTimeout(() -> 
-    sendPosition(position)
-  , timeout)
+# Handles the connection between client and server
+class Connection 
+  constructor : ->
+    @player = new Player(@onChangedState)
+    @socket = io.connect '/'
+    @socket.on('ready', @onReady)
+    @socket.on('receivingStates', @onReceivingStates)
+    
+  getPlayer : ->
+    @player
 
-currentPosition = new Point()
+  onReady : (data) =>
+    console.log "Welcome, player #{data.playerId}"
+    @player.startUpdating()
+    @play()
+
+    context = new webkitAudioContext()
+    sequencer = new Sequencer(context, data.sound, () ->
+      sequencer.start()
+    )
+    
+  onChangedState : (state) =>
+    @socket.emit('changedState', state)
+
+  onReceivingStates : (states) =>
+    @player.enqueueStates(states)
+  
+  play : () ->
+    states = @player.popStates()
+    states['self'] = @player.getState()
+    
+    # Draw all mixers
+    updated = []
+    for own playerId, state of states
+      updated.push(playerId)
+      element = "player_#{playerId}"
+      if $("##{element}").length == 0
+        $("#players").append(@createCanvas(element))
+      
+      canvas = document.getElementById(element)
+      context = canvas.getContext("2d")
+      context.clearRect(0, 0, canvas.width, canvas.height)
+      
+      if state.active
+        context.fillStyle = "orange"
+      else
+        context.fillStyle = "black"
+      context.fillRect(0, state.y, 50, 10)
+      
+    $('[id^="player_"]').each(() ->
+      element = $(@)
+      tmp = element.attr('id').split('_')
+      if $.inArray(tmp[1], updated) == -1
+        element.remove()
+    )
+    
+    $('#info').html('States: ' + JSON.stringify(states))
+    window.setTimeout(() =>
+      @play()
+    , Player.timeout)
+    
+  createCanvas : (id) ->
+    "<canvas width=\"50\" height=\"500\" id=\"#{id}\"></canvas>"
+
+connection = new Connection()
 
 $ ->
-  $('#box').mousemove((e) ->
-    currentPosition.set(e.offsetX, e.offsetY)
+  $('#players').append(connection.createCanvas('player_self'))
+  $('#player_self').mousemove((e) ->
+    connection.getPlayer().setPosition(e.offsetY)
   )
-
-socket = io.connect '/'
-
-socket.on('ready', (data) ->
-  console.log "Welcome, player #{data.playerId}"
-  sendPosition()
-  
-  context = new webkitAudioContext()
-  sequencer = new Sequencer(context, data.sound, () ->
-    #sequencer.start()
+  $('#player_self').mousedown((e) ->
+    connection.getPlayer().setActive(true)
   )
-  
-)
-
-
-socket.on('otherPositions', (positions) ->
-  $('#box').html('')
-  for own playerId, position of positions
-    player = $('<div></div>')
-    player.css({
-       border: "1px solid black"
-       height: 1
-       width: 1
-       position: 'absolute'
-       left: position.x
-       top: position.y
-    })
-    $('#box').append(player)
-)
-
-
+  $('#player_self').mouseup((e) ->
+    connection.getPlayer().setActive(false)
+  )

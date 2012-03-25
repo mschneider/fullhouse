@@ -1,5 +1,6 @@
-var Player, World, app, express, io, port, world;
-var __hasProp = Object.prototype.hasOwnProperty, __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+var Player, World, app, express, io, port, world,
+  __hasProp = Object.prototype.hasOwnProperty,
+  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
 World = (function() {
 
