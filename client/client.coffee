@@ -119,7 +119,7 @@ class Connection
         console.log (@sounds)
         sounds.push({
           sound: @sounds[playerId]
-          note: Math.floor(state.y / 10)
+          note: Math.floor((500 - state.y) / 10)
         })      
     cb(sounds)
     @drawMixer(states)

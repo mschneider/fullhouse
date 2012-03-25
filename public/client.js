@@ -168,7 +168,7 @@ Connection = (function() {
         console.log(this.sounds);
         sounds.push({
           sound: this.sounds[playerId],
-          note: Math.floor(state.y / 10)
+          note: Math.floor((500 - state.y) / 10)
         });
       }
     }
