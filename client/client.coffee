@@ -1,7 +1,7 @@
 # A state of a player
 class PlayerState
   
-  constructor : (y, active) ->
+  constructor : (@wave, @attack, @decay, y, active) ->
     @active = active | false
     @y = y | 0
     
@@ -11,24 +11,27 @@ class PlayerState
   setPosition : (y) ->
     @y = y
     
+    
+  getPosition : () ->
+    @y
+    
   setActive : (active) ->
     @active = active
     
   copy : ->
-    new PlayerState(@y, @active)
+    new PlayerState(@wave, @attack, @decay, @y, @active)
     
   values : ->
-    {y: @y, active: @active}
+    {y: @y, active: @active, wave: @wave, attack: @attack, decay: @decay}
     
 # The current player
 class Player
   
-  @timeout : 200
+  @timeout : 50
   
-  constructor : (changedCallback) ->
-    @changedCallback = changedCallback
+  constructor : (@id, @changedCallback, wave, attack, decay) ->
     @queuedStates = []
-    @state = new PlayerState()
+    @state = new PlayerState(wave, attack, decay)
   
   sendUpdate : ->
      if !@state.equals(@lastState)
@@ -46,39 +49,48 @@ class Player
     
   setPosition : (y) ->
     @state.setPosition(y)
+    
+  getPosition : () ->
+    @state.getPosition()
       
   setActive : (active) ->
     @state.setActive(active)
     
   enqueueStates : (states) ->
+    states[@id] = @getState()
     @queuedStates.push(states)
       
   popStates : ->
-    states = @queuedStates.shift()
-    if !states?
-      states = {}
-    states
+    if @queuedStates.length > 0
+      @lastStates = @queuedStates.shift()
+    @lastStates
+      
 
 # Handles the connection between client and server
 class Connection 
   constructor : ->
-    @player = new Player(@onChangedState)
-    @socket = io.connect '/'
-    @socket.on('ready', @onReady)
-    @socket.on('receivingStates', @onReceivingStates)
+    @sounds = {}
+    
+    # Load audio    
+    @context = new webkitAudioContext()
+    #staticAudioRouting = new StaticAudioRouting(context)
+    @loader = new WaveTableLoader(@context)
+    @loader.load =>
+      @compressor = @context.destination
+      console.log("Tables loaded")
+      @socket = io.connect '/'
+      @socket.on('ready', @onReady)
+      @socket.on('receivingStates', @onReceivingStates)
     
   getPlayer : ->
     @player
 
   onReady : (data) =>
     console.log "Welcome, player #{data.playerId}"
+    @player = new Player(data.playerId, @onChangedState, data.wave, data.attack, data.decay)
+    @player.enqueueStates({})
     @player.startUpdating()
-    @play()
-
-    context = new webkitAudioContext()
-    sequencer = new Sequencer(context, data.sound, () ->
-      sequencer.start()
-    )
+    @startPlaying()
     
   onChangedState : (state) =>
     @socket.emit('changedState', state)
@@ -86,10 +98,28 @@ class Connection
   onReceivingStates : (states) =>
     @player.enqueueStates(states)
   
-  play : () ->
+  startPlaying : () ->
+    @sequencer = new Sequencer @context, @compressor, @getSoundsAndDraw, 120.0, =>
+      console.log "loaded sequencer. call seq.start()"
+      @sequencer.start()
+      
+  getSoundsAndDraw : (cb) =>
     states = @player.popStates()
-    states['self'] = @player.getState()
-    
+    sounds = []
+    for own playerId, state of states
+      if state.active
+        if !@sounds[playerId]?
+          @sounds[playerId] = new Sound @context, @compressor, @loader.getTable(state.wave), state.attack, state.decay
+        
+        console.log (@sounds)
+        sounds.push({
+          sound: @sounds[playerId]
+          note: Math.floor(state.y / 10)
+        })      
+    cb(sounds)
+    @drawMixer(states)
+  
+  drawMixer : (states) ->
     # Draw all mixers
     updated = []
     for own playerId, state of states
@@ -97,42 +127,41 @@ class Connection
       element = "player_#{playerId}"
       if $("##{element}").length == 0
         $("#players").append(@createCanvas(element))
-      
+        if (playerId == @player.id)
+          el = $("##{element}")
+          el.addClass('self')
+          el.mousemove((e) =>
+            @player.setPosition(e.offsetY)
+          )
+          el.mousedown((e) =>
+            @player.setActive(true)
+          )
+          el.mouseup((e) =>
+            @player.setActive(false)
+          )
+
       canvas = document.getElementById(element)
       context = canvas.getContext("2d")
       context.clearRect(0, 0, canvas.width, canvas.height)
-      
+
       if state.active
         context.fillStyle = "orange"
       else
         context.fillStyle = "black"
       context.fillRect(0, state.y, 50, 10)
-      
+
     $('[id^="player_"]').each(() ->
       element = $(@)
       tmp = element.attr('id').split('_')
       if $.inArray(tmp[1], updated) == -1
         element.remove()
     )
-    
+
     $('#info').html('States: ' + JSON.stringify(states))
-    window.setTimeout(() =>
-      @play()
-    , Player.timeout)
-    
+  
   createCanvas : (id) ->
     "<canvas width=\"50\" height=\"500\" id=\"#{id}\"></canvas>"
 
 connection = new Connection()
 
 $ ->
-  $('#players').append(connection.createCanvas('player_self'))
-  $('#player_self').mousemove((e) ->
-    connection.getPlayer().setPosition(e.offsetY)
-  )
-  $('#player_self').mousedown((e) ->
-    connection.getPlayer().setActive(true)
-  )
-  $('#player_self').mouseup((e) ->
-    connection.getPlayer().setActive(false)
-  )

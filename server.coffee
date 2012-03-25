@@ -37,7 +37,7 @@ class World
 
 class Player
   
-  @timeout : 200
+  @timeout : 50
 
   constructor : (socket) ->
     @socket = socket
@@ -54,10 +54,17 @@ class Player
     
   onReady : (id) =>
     console.log "Player #{id} connected."
+    
+    waves = ['Twelve_String_Guitar', 'TB303']
+    wave = waves[Math.floor(Math.random() * waves.length)];
+    attack = Math.random()
+    decay = ((Math.random() * 5) + 1) * attack
+    
     @socket.emit('ready', {
       playerId : id
-      playerCount : world.getPlayerCount()
-      sound : id % 2
+      wave : wave
+      attack : attack
+      decay : decay  
     })
     @startStateSending()
 
