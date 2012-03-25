@@ -80,7 +80,7 @@ if ( !window.requestAnimationFrame ) {
 function WaveTableLoader(context) {
     this.context = context;
     this.waveNames = [
-      "Bass", "Organ", "Saw", "TB303", "Twelve_String_Guitar"
+      "Bass", "Organ", "Celeste", "TB303", "Twelve_String_Guitar"
     ];
 }
 

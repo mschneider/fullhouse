@@ -55,10 +55,27 @@ class Player
   onReady : (id) =>
     console.log "Player #{id} connected."
     
-    waves = ['Twelve_String_Guitar', 'TB303', 'Organ', 'Saw', 'Bass']
-    wave = waves[Math.floor(Math.random() * waves.length)];
-    attack = Math.random() / 40
-    decay = ((Math.random()) + 1) * attack
+    waves = ['Twelve_String_Guitar', 'TB303', 'Organ', 'Bass', 'Celeste']
+    wave = waves[Math.floor(Math.random() * waves.length)]
+    switch wave
+      when 'TB303'
+        attack = 0.1
+        decay = 0.1
+      when 'Organ'
+        attack = 0.2
+        decay = 0.1
+      when 'Twelve_String_Guitar'
+        attack = 0.01
+        decay = 0.3
+      when 'Bass'
+        attack = 0.01
+        decay = 0.1
+      when 'Celeste'
+        attack = 0.2
+        decay = 0.25
+      else
+        attack = Math.random() / 40
+        decay = ((Math.random()) + 1) * attack
     
     @socket.emit('ready', {
       playerId : id

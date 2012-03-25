@@ -1,6 +1,5 @@
-var Player, World, app, express, io, port, world,
-  __hasProp = Object.prototype.hasOwnProperty,
-  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+var Player, World, app, express, io, port, world;
+var __hasProp = Object.prototype.hasOwnProperty, __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
 World = (function() {
 
@@ -76,10 +75,29 @@ Player = (function() {
   Player.prototype.onReady = function(id) {
     var attack, decay, wave, waves;
     console.log("Player " + id + " connected.");
-    waves = ['Twelve_String_Guitar', 'TB303', 'Organ', 'Saw', 'Bass'];
+    waves = ['Twelve_String_Guitar', 'TB303', 'Organ', 'Bass', 'Celeste'];
     wave = waves[Math.floor(Math.random() * waves.length)];
-    attack = Math.random() / 40;
-    decay = ((Math.random()) + 1) * attack;
+    switch (wave) {
+      case 'TB303':
+        attack = 0.1;
+        decay = 0.1;
+        break;
+      case 'Organ':
+        attack = 0.2;
+        decay = 0.1;
+        break;
+      case 'Twelve_String_Guitar':
+        attack = 0.01;
+        decay = 0.3;
+        break;
+      case 'Bass':
+        attack = 0.01;
+        decay = 0.01;
+        break;
+      default:
+        attack = Math.random() / 40;
+        decay = ((Math.random()) + 1) * attack;
+    }
     this.socket.emit('ready', {
       playerId: id,
       wave: wave,
