@@ -1,5 +1,6 @@
-var Connection, Player, PlayerState, connection;
-var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; }, __hasProp = Object.prototype.hasOwnProperty;
+var Connection, Player, PlayerState, connection,
+  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
+  __hasProp = Object.prototype.hasOwnProperty;
 
 PlayerState = (function() {
 
@@ -165,7 +166,7 @@ Connection = (function() {
         console.log(this.sounds);
         sounds.push({
           sound: this.sounds[playerId],
-          note: Math.floor((500 - state.y) / 10)
+          note: Math.round((500 - state.y) / 10)
         });
       }
     }
@@ -174,8 +175,8 @@ Connection = (function() {
   };
 
   Connection.prototype.drawMixer = function(states) {
-    var canvas, context, el, element, playerId, state, updated;
-    var _this = this;
+    var canvas, context, el, element, playerId, state, updated,
+      _this = this;
     updated = [];
     for (playerId in states) {
       if (!__hasProp.call(states, playerId)) continue;
@@ -190,10 +191,10 @@ Connection = (function() {
           el.mousemove(function(e) {
             return _this.player.setPosition(e.offsetY);
           });
-          el.mousedown(function(e) {
+          $(document.body).mousedown(function(e) {
             return _this.player.setActive(true);
           });
-          el.mouseup(function(e) {
+          $(document.body).mouseup(function(e) {
             return _this.player.setActive(false);
           });
         }
@@ -206,7 +207,7 @@ Connection = (function() {
       } else {
         context.fillStyle = "black";
       }
-      context.fillRect(0, state.y, 50, 10);
+      context.fillRect(0, state.y - 10, 50, 10);
     }
     $('[id^="player_"]').each(function() {
       var tmp;

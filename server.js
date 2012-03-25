@@ -144,7 +144,7 @@ world = new World();
 io.configure(function() {
   if (process.env.PORT != null) {
     io.set("transports", ["xhr-polling"]);
-    io.set("polling duration", 10);
+    io.set("polling duration", 1);
   }
   return io.set("log level", 2);
 });
