@@ -20,11 +20,12 @@ $(function() {
   context = new webkitAudioContext();
   loader = new WaveTableLoader(context);
   return loader.load(function() {
-    var compressor;
+    var compressor, sound2;
     console.log("loaded wave tables");
     compressor = context.destination;
     sound = new Sound(context, compressor, loader.getTable('TB303'), 0.01, 0.04);
-    return seq = new Sequencer(context, compressor, sound, 120.0, function() {
+    sound2 = new Sound(context, compressor, loader.getTable('Twelve_String_Guitar'), 0.02, 0.08);
+    return seq = new Sequencer(context, compressor, sound, sound2, 120.0, function() {
       return console.log("loaded sequencer. call seq.start()");
     });
   });

@@ -1,11 +1,9 @@
-
 class Sound
   constructor: (@context, output, wave, attack, decay) ->
     @env = new Envelope context, attack, decay
     @osc = new Oscillator context, wave
     @osc.node.connect @env.node
     @env.node.connect output
-
 
   indexToFrequency: (index) ->
     index = index % 49

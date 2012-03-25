@@ -18,6 +18,7 @@ $ ->
     compressor = context.destination #context.createDynamicsCompressor()
     #compressor.connect context.destination
     sound = new Sound context, compressor, loader.getTable('TB303'), 0.01, 0.04
-    seq = new Sequencer context, compressor, sound, 120.0, ->
+    sound2= new Sound context, compressor, loader.getTable('Twelve_String_Guitar'), 0.02, 0.08
+    seq = new Sequencer context, compressor, sound, sound2, 120.0, ->
       console.log "loaded sequencer. call seq.start()"
 

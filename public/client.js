@@ -1,6 +1,5 @@
-var Connection, Player, PlayerState, connection,
-  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
-  __hasProp = Object.prototype.hasOwnProperty;
+var Connection, Player, PlayerState, connection;
+var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; }, __hasProp = Object.prototype.hasOwnProperty;
 
 PlayerState = (function() {
 
@@ -123,8 +122,8 @@ Connection = (function() {
   };
 
   Connection.prototype.play = function() {
-    var canvas, context, element, playerId, state, states, updated,
-      _this = this;
+    var canvas, context, element, playerId, state, states, updated;
+    var _this = this;
     states = this.player.popStates();
     states['self'] = this.player.getState();
     updated = [];
