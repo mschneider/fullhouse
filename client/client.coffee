@@ -117,7 +117,7 @@ class Connection
         console.log (@sounds)
         sounds.push({
           sound: @sounds[playerId]
-          note: Math.floor((500 - state.y) / 10)
+          note: Math.round((500 - state.y) / 10)
         })      
     cb(sounds)
     @drawMixer(states)
@@ -136,10 +136,10 @@ class Connection
           el.mousemove((e) =>
             @player.setPosition(e.offsetY)
           )
-          el.mousedown((e) =>
+          $(document.body).mousedown((e) =>
             @player.setActive(true)
           )
-          el.mouseup((e) =>
+          $(document.body).mouseup((e) =>
             @player.setActive(false)
           )
 
@@ -151,7 +151,7 @@ class Connection
         context.fillStyle = "orange"
       else
         context.fillStyle = "black"
-      context.fillRect(0, state.y, 50, 10)
+      context.fillRect(0, state.y - 10, 50, 10)
 
     $('[id^="player_"]').each(() ->
       element = $(@)

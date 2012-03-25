@@ -114,7 +114,7 @@ io.configure(() ->
   if process.env.PORT?
     # We are @ heroku
     io.set("transports", ["xhr-polling"])
-    io.set("polling duration", 10)
+    io.set("polling duration", 1)
   io.set("log level", 2)
 )
 
