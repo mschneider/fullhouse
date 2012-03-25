@@ -11,7 +11,7 @@ Envelope = (function() {
   }
 
   Envelope.prototype.play = function(time) {
-    console.log("" + this.context.currentTime + " => " + time + "-" + (time + this.attack) + "-" + (time + this.attack + this.decay));
+    this.node.gain.cancelScheduledValues(time);
     this.node.gain.setTargetValueAtTime(1, time, this.attack);
     return this.node.gain.setTargetValueAtTime(0, time + this.attack, this.decay);
   };

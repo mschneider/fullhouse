@@ -47,7 +47,6 @@ class Sequencer
     @checkFn (states) ->
       for state in states
         state.sound.play state.note, time
-        console.log(state.note)
 
   stepDifference: ->
     secondsPerBeat = 60.0 / (4 * @tempo)

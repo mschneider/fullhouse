@@ -114,7 +114,6 @@ class Connection
         if !@sounds[playerId]?
           @sounds[playerId] = new Sound @context, @compressor, @loader.getTable(state.wave), state.attack, state.decay
         
-        console.log (@sounds)
         sounds.push({
           sound: @sounds[playerId]
           note: Math.round((500 - state.y) / 10)

@@ -1,6 +1,5 @@
-var Connection, Player, PlayerState, connection,
-  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
-  __hasProp = Object.prototype.hasOwnProperty;
+var Connection, Player, PlayerState, connection;
+var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; }, __hasProp = Object.prototype.hasOwnProperty;
 
 PlayerState = (function() {
 
@@ -163,7 +162,6 @@ Connection = (function() {
         if (!(this.sounds[playerId] != null)) {
           this.sounds[playerId] = new Sound(this.context, this.compressor, this.loader.getTable(state.wave), state.attack, state.decay);
         }
-        console.log(this.sounds);
         sounds.push({
           sound: this.sounds[playerId],
           note: Math.round((500 - state.y) / 10)
@@ -175,8 +173,8 @@ Connection = (function() {
   };
 
   Connection.prototype.drawMixer = function(states) {
-    var canvas, context, el, element, playerId, state, updated, y,
-      _this = this;
+    var canvas, context, el, element, playerId, state, updated, y;
+    var _this = this;
     updated = [];
     for (playerId in states) {
       if (!__hasProp.call(states, playerId)) continue;

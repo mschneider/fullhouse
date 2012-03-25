@@ -37,8 +37,8 @@ Sequencer = (function() {
   };
 
   Sequencer.prototype.run = function() {
-    var time,
-      _this = this;
+    var time;
+    var _this = this;
     time = this.context.currentTime - this.startTime;
     while (this.nextStepTime < time + 0.04) {
       this.scheduleStep(this.startTime + time);
@@ -62,8 +62,7 @@ Sequencer = (function() {
       _results = [];
       for (_i = 0, _len = states.length; _i < _len; _i++) {
         state = states[_i];
-        state.sound.play(state.note, time);
-        _results.push(console.log(state.note));
+        _results.push(state.sound.play(state.note, time));
       }
       return _results;
     });
