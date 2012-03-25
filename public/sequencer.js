@@ -13,10 +13,23 @@ Sequencer = (function() {
     loadSound('kick', function(response) {
       return _this.context.decodeAudioData(response, function(buffer) {
         _this.kick = buffer;
-        return typeof cb === "function" ? cb() : void 0;
+        return loadSound('clap', function(response) {
+          return _this.context.decodeAudioData(response, function(buffer) {
+            _this.clap = buffer;
+            return typeof cb === "function" ? cb() : void 0;
+          });
+        });
       });
     });
   }
+
+  Sequencer.prototype.play = function(sample, time) {
+    var source;
+    source = this.context.createBufferSource();
+    source.buffer = sample;
+    source.connect(this.context.destination);
+    return source.noteOn(time);
+  };
 
   Sequencer.prototype.run = function() {
     var time,

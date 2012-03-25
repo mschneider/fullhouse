@@ -114,7 +114,11 @@ Connection = (function() {
     this.context = new webkitAudioContext();
     this.loader = new WaveTableLoader(this.context);
     this.loader.load(function() {
-      _this.compressor = _this.context.destination;
+      _this.compressor = _this.context.createDynamicsCompressor();
+      _this.melody = _this.context.createGainNode();
+      _this.melody.gain.value = 0.5;
+      _this.compressor.connect(_this.melody);
+      _this.melody.connect(_this.context.destination);
       console.log("Tables loaded");
       _this.socket = io.connect('/');
       _this.socket.on('ready', _this.onReady);

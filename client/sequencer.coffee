@@ -5,7 +5,16 @@ class Sequencer
     loadSound 'kick', (response) =>
       @context.decodeAudioData response, (buffer) =>
         @kick = buffer
-        cb?()
+        loadSound 'clap', (response) =>
+          @context.decodeAudioData response, (buffer) =>
+            @clap = buffer
+            cb?()
+
+  play: (sample, time) ->
+    source = @context.createBufferSource()
+    source.buffer = sample
+    source.connect @context.destination
+    source.noteOn time
 
   run: ->
     time = @context.currentTime - @startTime

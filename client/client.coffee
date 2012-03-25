@@ -76,7 +76,12 @@ class Connection
     #staticAudioRouting = new StaticAudioRouting(context)
     @loader = new WaveTableLoader(@context)
     @loader.load =>
-      @compressor = @context.destination
+      @compressor = @context.createDynamicsCompressor()
+      @melody = @context.createGainNode()
+      @melody.gain.value = 0.5
+      @compressor.connect @melody
+      @melody.connect @context.destination
+      
       console.log("Tables loaded")
       @socket = io.connect '/'
       @socket.on('ready', @onReady)
