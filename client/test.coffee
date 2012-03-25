@@ -7,7 +7,7 @@ loadSound = (name, cb) ->
   request.onload = () -> cb(request.response)
   request.send()
 
-context = sound = seq = null
+context = compressor = melody = sound = seq = null
 
 $ ->
   context = new webkitAudioContext()
@@ -15,8 +15,11 @@ $ ->
   loader = new WaveTableLoader(context)
   loader.load () ->
     console.log "loaded wave tables"
-    compressor = context.destination #context.createDynamicsCompressor()
-    #compressor.connect context.destination
+    compressor = context.createDynamicsCompressor()
+    melody = context.createGainNode()
+    melody.gain.value = 0.5
+    compressor.connect melody
+    melody.connect context.destination
     sound = new Sound context, compressor, loader.getTable('TB303'), 0.01, 0.04
     sound2= new Sound context, compressor, loader.getTable('Twelve_String_Guitar'), 0.02, 0.08
     seq = new Sequencer context, compressor, sound, sound2, 120.0, ->

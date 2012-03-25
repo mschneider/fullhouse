@@ -27,7 +27,7 @@ class Sequencer
     @stepIndex += 1
     if (@stepIndex % 4) == 0
       @play @kick, time
-    if (@stepIndex % 8) == 5
+    if (@stepIndex % 8) == 4
       @play @clap, time
     notes = [20, 22, 24, 26, 40, 36, 37, 33,
              20, 21, 22, 23, 30, 28, 26, 24]

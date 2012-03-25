@@ -49,7 +49,7 @@ Sequencer = (function() {
     var index, notes, notes2;
     this.stepIndex += 1;
     if ((this.stepIndex % 4) === 0) this.play(this.kick, time);
-    if ((this.stepIndex % 8) === 5) this.play(this.clap, time);
+    if ((this.stepIndex % 8) === 4) this.play(this.clap, time);
     notes = [20, 22, 24, 26, 40, 36, 37, 33, 20, 21, 22, 23, 30, 28, 26, 24];
     notes2 = [14, 18, 20, 15, 32, 33, 28, 20, 7, 12, 15, 20, 28, 30, 25, 17];
     if (this.stepIndex % 2 === 0) {
