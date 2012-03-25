@@ -53,7 +53,6 @@ Player = (function() {
   function Player(id, changedCallback, wave, attack, decay) {
     this.id = id;
     this.changedCallback = changedCallback;
-    this.queuedStates = [];
     this.state = new PlayerState(wave, attack, decay);
   }
 
@@ -90,11 +89,10 @@ Player = (function() {
 
   Player.prototype.enqueueStates = function(states) {
     states[this.id] = this.getState();
-    return this.queuedStates.push(states);
+    return this.lastStates = states;
   };
 
   Player.prototype.popStates = function() {
-    if (this.queuedStates.length > 0) this.lastStates = this.queuedStates.shift();
     return this.lastStates;
   };
 

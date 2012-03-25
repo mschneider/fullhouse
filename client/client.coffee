@@ -30,7 +30,7 @@ class Player
   @timeout : 50
   
   constructor : (@id, @changedCallback, wave, attack, decay) ->
-    @queuedStates = []
+    # @queuedStates = []
     @state = new PlayerState(wave, attack, decay)
   
   sendUpdate : ->
@@ -58,11 +58,9 @@ class Player
     
   enqueueStates : (states) ->
     states[@id] = @getState()
-    @queuedStates.push(states)
+    @lastStates = states
       
   popStates : ->
-    if @queuedStates.length > 0
-      @lastStates = @queuedStates.shift()
     @lastStates
       
 

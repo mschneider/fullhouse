@@ -76,7 +76,7 @@ Player = (function() {
   Player.prototype.onReady = function(id) {
     var attack, decay, wave, waves;
     console.log("Player " + id + " connected.");
-    waves = ['Twelve_String_Guitar', 'TB303'];
+    waves = ['Twelve_String_Guitar', 'TB303', 'Organ', 'Saw', 'Bass'];
     wave = waves[Math.floor(Math.random() * waves.length)];
     attack = Math.random() / 40;
     decay = ((Math.random()) + 1) * attack;
