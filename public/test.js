@@ -17,6 +17,7 @@ context = compressor = melody = sound = seq = null;
 
 $(function() {
   var loader;
+  return;
   context = new webkitAudioContext();
   loader = new WaveTableLoader(context);
   return loader.load(function() {

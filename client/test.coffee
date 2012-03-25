@@ -10,6 +10,7 @@ loadSound = (name, cb) ->
 context = compressor = melody = sound = seq = null
 
 $ ->
+  return
   context = new webkitAudioContext()
   #staticAudioRouting = new StaticAudioRouting(context)
   loader = new WaveTableLoader(context)

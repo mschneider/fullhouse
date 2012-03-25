@@ -52,7 +52,7 @@ World = (function() {
 
 Player = (function() {
 
-  Player.timeout = 200;
+  Player.timeout = 50;
 
   function Player(socket) {
     this.onDisconnect = __bind(this.onDisconnect, this);
@@ -74,11 +74,17 @@ Player = (function() {
   };
 
   Player.prototype.onReady = function(id) {
+    var attack, decay, wave, waves;
     console.log("Player " + id + " connected.");
+    waves = ['Twelve_String_Guitar', 'TB303', 'Organ', 'Saw', 'Bass'];
+    wave = waves[Math.floor(Math.random() * waves.length)];
+    attack = Math.random() / 40;
+    decay = ((Math.random()) + 1) * attack;
     this.socket.emit('ready', {
       playerId: id,
-      playerCount: world.getPlayerCount(),
-      sound: id % 2
+      wave: wave,
+      attack: attack,
+      decay: decay
     });
     return this.startStateSending();
   };

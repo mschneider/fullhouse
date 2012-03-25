@@ -3,7 +3,10 @@ var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments)
 
 PlayerState = (function() {
 
-  function PlayerState(y, active) {
+  function PlayerState(wave, attack, decay, y, active) {
+    this.wave = wave;
+    this.attack = attack;
+    this.decay = decay;
     this.active = active | false;
     this.y = y | 0;
   }
@@ -16,18 +19,25 @@ PlayerState = (function() {
     return this.y = y;
   };
 
+  PlayerState.prototype.getPosition = function() {
+    return this.y;
+  };
+
   PlayerState.prototype.setActive = function(active) {
     return this.active = active;
   };
 
   PlayerState.prototype.copy = function() {
-    return new PlayerState(this.y, this.active);
+    return new PlayerState(this.wave, this.attack, this.decay, this.y, this.active);
   };
 
   PlayerState.prototype.values = function() {
     return {
       y: this.y,
-      active: this.active
+      active: this.active,
+      wave: this.wave,
+      attack: this.attack,
+      decay: this.decay
     };
   };
 
@@ -37,12 +47,12 @@ PlayerState = (function() {
 
 Player = (function() {
 
-  Player.timeout = 200;
+  Player.timeout = 50;
 
-  function Player(changedCallback) {
+  function Player(id, changedCallback, wave, attack, decay) {
+    this.id = id;
     this.changedCallback = changedCallback;
-    this.queuedStates = [];
-    this.state = new PlayerState();
+    this.state = new PlayerState(wave, attack, decay);
   }
 
   Player.prototype.sendUpdate = function() {
@@ -68,19 +78,21 @@ Player = (function() {
     return this.state.setPosition(y);
   };
 
+  Player.prototype.getPosition = function() {
+    return this.state.getPosition();
+  };
+
   Player.prototype.setActive = function(active) {
     return this.state.setActive(active);
   };
 
   Player.prototype.enqueueStates = function(states) {
-    return this.queuedStates.push(states);
+    states[this.id] = this.getState();
+    return this.lastStates = states;
   };
 
   Player.prototype.popStates = function() {
-    var states;
-    states = this.queuedStates.shift();
-    if (!(states != null)) states = {};
-    return states;
+    return this.lastStates;
   };
 
   return Player;
@@ -90,12 +102,25 @@ Player = (function() {
 Connection = (function() {
 
   function Connection() {
+    this.getSoundsAndDraw = __bind(this.getSoundsAndDraw, this);
     this.onReceivingStates = __bind(this.onReceivingStates, this);
     this.onChangedState = __bind(this.onChangedState, this);
-    this.onReady = __bind(this.onReady, this);    this.player = new Player(this.onChangedState);
-    this.socket = io.connect('/');
-    this.socket.on('ready', this.onReady);
-    this.socket.on('receivingStates', this.onReceivingStates);
+    this.onReady = __bind(this.onReady, this);
+    var _this = this;
+    this.sounds = {};
+    this.context = new webkitAudioContext();
+    this.loader = new WaveTableLoader(this.context);
+    this.loader.load(function() {
+      _this.compressor = _this.context.createDynamicsCompressor();
+      _this.melody = _this.context.createGainNode();
+      _this.melody.gain.value = 0.5;
+      _this.compressor.connect(_this.melody);
+      _this.melody.connect(_this.context.destination);
+      console.log("Tables loaded");
+      _this.socket = io.connect('/');
+      _this.socket.on('ready', _this.onReady);
+      return _this.socket.on('receivingStates', _this.onReceivingStates);
+    });
   }
 
   Connection.prototype.getPlayer = function() {
@@ -103,14 +128,11 @@ Connection = (function() {
   };
 
   Connection.prototype.onReady = function(data) {
-    var context, sequencer;
     console.log("Welcome, player " + data.playerId);
+    this.player = new Player(data.playerId, this.onChangedState, data.wave, data.attack, data.decay);
+    this.player.enqueueStates({});
     this.player.startUpdating();
-    this.play();
-    context = new webkitAudioContext();
-    return sequencer = new Sequencer(context, data.sound, function() {
-      return sequencer.start();
-    });
+    return this.startPlaying();
   };
 
   Connection.prototype.onChangedState = function(state) {
@@ -121,11 +143,39 @@ Connection = (function() {
     return this.player.enqueueStates(states);
   };
 
-  Connection.prototype.play = function() {
-    var canvas, context, element, playerId, state, states, updated;
+  Connection.prototype.startPlaying = function() {
     var _this = this;
+    return this.sequencer = new Sequencer(this.context, this.compressor, this.getSoundsAndDraw, 120.0, function() {
+      console.log("loaded sequencer. call seq.start()");
+      return _this.sequencer.start();
+    });
+  };
+
+  Connection.prototype.getSoundsAndDraw = function(cb) {
+    var playerId, sounds, state, states;
     states = this.player.popStates();
-    states['self'] = this.player.getState();
+    sounds = [];
+    for (playerId in states) {
+      if (!__hasProp.call(states, playerId)) continue;
+      state = states[playerId];
+      if (state.active) {
+        if (!(this.sounds[playerId] != null)) {
+          this.sounds[playerId] = new Sound(this.context, this.compressor, this.loader.getTable(state.wave), state.attack, state.decay);
+        }
+        console.log(this.sounds);
+        sounds.push({
+          sound: this.sounds[playerId],
+          note: Math.floor((500 - state.y) / 10)
+        });
+      }
+    }
+    cb(sounds);
+    return this.drawMixer(states);
+  };
+
+  Connection.prototype.drawMixer = function(states) {
+    var canvas, context, el, element, playerId, state, updated;
+    var _this = this;
     updated = [];
     for (playerId in states) {
       if (!__hasProp.call(states, playerId)) continue;
@@ -134,6 +184,19 @@ Connection = (function() {
       element = "player_" + playerId;
       if ($("#" + element).length === 0) {
         $("#players").append(this.createCanvas(element));
+        if (playerId === this.player.id) {
+          el = $("#" + element);
+          el.addClass('self');
+          el.mousemove(function(e) {
+            return _this.player.setPosition(e.offsetY);
+          });
+          el.mousedown(function(e) {
+            return _this.player.setActive(true);
+          });
+          el.mouseup(function(e) {
+            return _this.player.setActive(false);
+          });
+        }
       }
       canvas = document.getElementById(element);
       context = canvas.getContext("2d");
@@ -151,10 +214,7 @@ Connection = (function() {
       tmp = element.attr('id').split('_');
       if ($.inArray(tmp[1], updated) === -1) return element.remove();
     });
-    $('#info').html('States: ' + JSON.stringify(states));
-    return window.setTimeout(function() {
-      return _this.play();
-    }, Player.timeout);
+    return $('#info').html('States: ' + JSON.stringify(states));
   };
 
   Connection.prototype.createCanvas = function(id) {
@@ -167,15 +227,4 @@ Connection = (function() {
 
 connection = new Connection();
 
-$(function() {
-  $('#players').append(connection.createCanvas('player_self'));
-  $('#player_self').mousemove(function(e) {
-    return connection.getPlayer().setPosition(e.offsetY);
-  });
-  $('#player_self').mousedown(function(e) {
-    return connection.getPlayer().setActive(true);
-  });
-  return $('#player_self').mouseup(function(e) {
-    return connection.getPlayer().setActive(false);
-  });
-});
+$(function() {});
