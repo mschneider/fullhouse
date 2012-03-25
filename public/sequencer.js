@@ -14,10 +14,15 @@ Sequencer = (function() {
     loadSound('kick', function(response) {
       return _this.context.decodeAudioData(response, function(buffer) {
         _this.kick = buffer;
-        return loadSound('clap', function(response) {
+        return loadSound('clap2', function(response) {
           return _this.context.decodeAudioData(response, function(buffer) {
             _this.clap = buffer;
-            return typeof cb === "function" ? cb() : void 0;
+            return loadSound('hhc', function(response) {
+              return _this.context.decodeAudioData(response, function(buffer) {
+                _this.closedHiHat = buffer;
+                return typeof cb === "function" ? cb() : void 0;
+              });
+            });
           });
         });
       });
@@ -46,10 +51,13 @@ Sequencer = (function() {
   };
 
   Sequencer.prototype.scheduleStep = function(time) {
-    var index, notes, notes2;
+    var index, notes, notes2, _ref;
     this.stepIndex += 1;
     if ((this.stepIndex % 4) === 0) this.play(this.kick, time);
     if ((this.stepIndex % 8) === 4) this.play(this.clap, time);
+    if ((_ref = this.stepIndex % 64) === 27 || _ref === 30) {
+      this.play(this.closedHiHat, time);
+    }
     notes = [20, 22, 24, 26, 40, 36, 37, 33, 20, 21, 22, 23, 30, 28, 26, 24];
     notes2 = [14, 18, 20, 15, 32, 33, 28, 20, 7, 12, 15, 20, 28, 30, 25, 17];
     if (this.stepIndex % 2 === 0) {

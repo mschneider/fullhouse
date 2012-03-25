@@ -5,10 +5,13 @@ class Sequencer
     loadSound 'kick', (response) =>
       @context.decodeAudioData response, (buffer) =>
         @kick = buffer
-        loadSound 'clap', (response) =>
+        loadSound 'clap2', (response) =>
           @context.decodeAudioData response, (buffer) =>
             @clap = buffer
-            cb?()
+            loadSound 'hhc', (response) =>
+              @context.decodeAudioData response, (buffer) =>
+                @closedHiHat = buffer
+                cb?()
 
   play: (sample, time) ->
     source = @context.createBufferSource()
@@ -29,6 +32,8 @@ class Sequencer
       @play @kick, time
     if (@stepIndex % 8) == 4
       @play @clap, time
+    if (@stepIndex % 64) in [27, 30]
+      @play @closedHiHat, time
     notes = [20, 22, 24, 26, 40, 36, 37, 33,
              20, 21, 22, 23, 30, 28, 26, 24]
     notes2= [14, 18, 20, 15, 32, 33, 28, 20,

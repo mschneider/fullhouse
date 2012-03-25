@@ -29,7 +29,7 @@ $(function() {
     melody.connect(context.destination);
     sound = new Sound(context, compressor, loader.getTable('TB303'), 0.01, 0.04);
     sound2 = new Sound(context, compressor, loader.getTable('Twelve_String_Guitar'), 0.02, 0.08);
-    return seq = new Sequencer(context, compressor, sound, sound2, 120.0, function() {
+    return seq = new Sequencer(context, compressor, sound, sound2, 116.0, function() {
       return console.log("loaded sequencer. call seq.start()");
     });
   });
