@@ -14,10 +14,23 @@ Sequencer = (function() {
     loadSound('kick', function(response) {
       return _this.context.decodeAudioData(response, function(buffer) {
         _this.kick = buffer;
-        return typeof cb === "function" ? cb() : void 0;
+        return loadSound('clap', function(response) {
+          return _this.context.decodeAudioData(response, function(buffer) {
+            _this.clap = buffer;
+            return typeof cb === "function" ? cb() : void 0;
+          });
+        });
       });
     });
   }
+
+  Sequencer.prototype.play = function(sample, time) {
+    var source;
+    source = this.context.createBufferSource();
+    source.buffer = sample;
+    source.connect(this.context.destination);
+    return source.noteOn(time);
+  };
 
   Sequencer.prototype.run = function() {
     var time;
@@ -33,14 +46,10 @@ Sequencer = (function() {
   };
 
   Sequencer.prototype.scheduleStep = function(time) {
-    var index, notes, notes2, source;
+    var index, notes, notes2;
     this.stepIndex += 1;
-    if ((this.stepIndex % 4) === 0) {
-      source = this.context.createBufferSource();
-      source.buffer = this.kick;
-      source.connect(this.context.destination);
-      source.noteOn(time);
-    }
+    if ((this.stepIndex % 4) === 0) this.play(this.kick, time);
+    if ((this.stepIndex % 8) === 5) this.play(this.clap, time);
     notes = [20, 22, 24, 26, 40, 36, 37, 33, 20, 21, 22, 23, 30, 28, 26, 24];
     notes2 = [14, 18, 20, 15, 32, 33, 28, 20, 7, 12, 15, 20, 28, 30, 25, 17];
     if (this.stepIndex % 2 === 0) {

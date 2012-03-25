@@ -5,7 +5,16 @@ class Sequencer
     loadSound 'kick', (response) =>
       @context.decodeAudioData response, (buffer) =>
         @kick = buffer
-        cb?()
+        loadSound 'clap', (response) =>
+          @context.decodeAudioData response, (buffer) =>
+            @clap = buffer
+            cb?()
+
+  play: (sample, time) ->
+    source = @context.createBufferSource()
+    source.buffer = sample
+    source.connect @context.destination
+    source.noteOn time
 
   run: ->
     time = @context.currentTime - @startTime
@@ -17,10 +26,9 @@ class Sequencer
   scheduleStep: (time) ->
     @stepIndex += 1
     if (@stepIndex % 4) == 0
-      source = @context.createBufferSource()
-      source.buffer = @kick
-      source.connect @context.destination
-      source.noteOn time
+      @play @kick, time
+    if (@stepIndex % 8) == 5
+      @play @clap, time
     notes = [20, 22, 24, 26, 40, 36, 37, 33,
              20, 21, 22, 23, 30, 28, 26, 24]
     notes2= [14, 18, 20, 15, 32, 33, 28, 20,
