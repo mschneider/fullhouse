@@ -153,10 +153,12 @@ class Connection
         context.fillStyle = "black"
         
       y = state.y - 10
-      if y < 490
+      if y > 490
         y = 490
+      if y < 0
+        y = 0
         
-      context.fillRect(0, , 50, 10)
+      context.fillRect(0, y, 50, 10)
 
     $('[id^="player_"]').each(() ->
       element = $(@)

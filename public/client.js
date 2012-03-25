@@ -175,7 +175,7 @@ Connection = (function() {
   };
 
   Connection.prototype.drawMixer = function(states) {
-    var canvas, context, el, element, playerId, state, updated,
+    var canvas, context, el, element, playerId, state, updated, y,
       _this = this;
     updated = [];
     for (playerId in states) {
@@ -207,7 +207,10 @@ Connection = (function() {
       } else {
         context.fillStyle = "black";
       }
-      context.fillRect(0, state.y - 10, 50, 10);
+      y = state.y - 10;
+      if (y > 490) y = 490;
+      if (y < 0) y = 0;
+      context.fillRect(0, y, 50, 10);
     }
     $('[id^="player_"]').each(function() {
       var tmp;
