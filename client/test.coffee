@@ -15,7 +15,9 @@ $ ->
   loader = new WaveTableLoader(context)
   loader.load () ->
     console.log "loaded wave tables"
-    sound = new Sound context, loader.getTable('TB303'), 0.01, 0.04
-    seq = new Sequencer context, sound, 120.0, ->
+    compressor = context.destination #context.createDynamicsCompressor()
+    #compressor.connect context.destination
+    sound = new Sound context, compressor, loader.getTable('TB303'), 0.01, 0.04
+    seq = new Sequencer context, compressor, sound, 120.0, ->
       console.log "loaded sequencer. call seq.start()"
 

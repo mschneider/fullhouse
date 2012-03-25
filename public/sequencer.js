@@ -2,9 +2,10 @@ var Sequencer;
 
 Sequencer = (function() {
 
-  function Sequencer(context, sound, tempo, cb) {
+  function Sequencer(context, output, sound, tempo, cb) {
     var _this = this;
     this.context = context;
+    this.output = output;
     this.sound = sound;
     this.tempo = tempo;
     this.nextStepTime = 0.0;
@@ -31,7 +32,7 @@ Sequencer = (function() {
   };
 
   Sequencer.prototype.scheduleStep = function(time) {
-    var note, noteIndex, notes, source;
+    var source;
     this.stepIndex += 1;
     if ((this.stepIndex % 4) === 0) {
       source = this.context.createBufferSource();
@@ -39,12 +40,8 @@ Sequencer = (function() {
       source.connect(this.context.destination);
       source.noteOn(time);
     }
-    notes = [-1, 50, 55, -1, 37, -1, 20, -1, 26, -1, 30, -1, 38, -1, 40, -1];
-    noteIndex = this.stepIndex % notes.length;
-    if (-1 !== (note = notes[noteIndex])) {
-      console.log(note, this.context.currentTime, time);
-      return this.sound.play(note, time);
-    }
+    console.log(this.stepIndex, this.context.currentTime, time);
+    return this.sound.play(this.stepIndex, time);
   };
 
   Sequencer.prototype.stepDifference = function() {

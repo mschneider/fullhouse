@@ -1,5 +1,5 @@
 class Sequencer
-  constructor: (@context, @sound, @tempo, cb) ->
+  constructor: (@context, @output, @sound, @tempo, cb) ->
     @nextStepTime = 0.0
     @stepIndex = -1
     loadSound 'kick', (response) =>
@@ -21,14 +21,8 @@ class Sequencer
       source.buffer = @kick
       source.connect @context.destination
       source.noteOn time
-    notes = [-1, 50, 55, -1,
-             37, -1, 20, -1,
-             26, -1, 30, -1,
-             38, -1, 40, -1 ]
-    noteIndex = @stepIndex % notes.length
-    if (-1 != note = notes[noteIndex])
-      console.log note, @context.currentTime, time
-      @sound.play note, time
+    console.log @stepIndex, @context.currentTime, time
+    @sound.play @stepIndex, time
 
   stepDifference: ->
     secondsPerBeat = 60.0 / (4 * @tempo)
